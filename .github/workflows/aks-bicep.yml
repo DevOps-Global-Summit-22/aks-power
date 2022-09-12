@@ -42,6 +42,7 @@ jobs:
           az deployment sub validate \
             --name validate-${{ github.run_id }} \
             --template-file iac/deploy.bicep \
+            --parameters iac/parameters/parameters.dev.json \
             --location $LOCATION     
     # Preview changes
     - name: "What-If"
