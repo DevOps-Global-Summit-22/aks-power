@@ -10,6 +10,7 @@ permissions:
 
 env:
   LOCATION: "westeurope"
+  environment: "dev"
 
 jobs:
   bicep-whatif:
@@ -42,7 +43,7 @@ jobs:
           az deployment sub validate \
             --name validate-${{ github.run_id }} \
             --template-file iac/deploy.bicep \
-            --parameters iac/parameters/parameters.dev.json \
+            --parameters iac/parameters/parameters.${{ env.environment }}.json \
             --location $LOCATION     
     # Preview changes
     - name: "What-If"
