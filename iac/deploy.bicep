@@ -8,7 +8,7 @@ param location string = deployment().location
   'dev'
   'prod'
 ])
-param environment string
+param environment string = 'dev'
 
 var spokeResourceGroupName = 'aks-power-${environment}-we-rg'
 var jumpResourceGroupName = 'aks-power-jump-${environment}-we-rg'
