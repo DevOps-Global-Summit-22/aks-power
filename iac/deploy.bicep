@@ -19,3 +19,15 @@ module platform 'modules/platform/deploy.bicep' = {
     resourceGroupName: resourceGroupName
   }
 }
+
+module identity 'modules/identity/deploy.bicep' = {
+  name: 'identity-deployment'
+  scope: resourceGroup(subscription().subscriptionId, resourceGroupName)
+  params: {
+    environment: environment
+    location: location
+  }
+  dependsOn: [
+    platform
+  ]
+}
