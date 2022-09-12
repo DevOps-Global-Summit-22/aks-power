@@ -15,7 +15,6 @@ jobs:
   bicep-whatif:
     name: 'Bicep Whatif'
     runs-on: ubuntu-latest
-    environment: development
     steps:
     # Checkout the repository to the GitHub Actions runner
     - name: Checkout
@@ -82,7 +81,6 @@ jobs:
     name: 'Bicep Deploy'
     if: github.ref == 'refs/heads/main' 
     runs-on: ubuntu-latest
-    environment: development-approval
     needs: [bicep-whatif]
 
     steps:
