@@ -11,7 +11,6 @@ permissions:
 
 jobs:
   DEV:
-    environment: development
-      uses: ./.github/workflows/bicep-deployment.yml
-      with:
-        environment: development
+    uses: ./.github/workflows/bicep-deployment.yml
+    with:
+      environment: development

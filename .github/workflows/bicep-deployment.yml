@@ -12,9 +12,10 @@ env:
   LOCATION: "westeurope"
 
 jobs:
-  bicep-whatif:
+  bicep-whatif-deployment:
     name: 'Bicep Deployment'
     runs-on: ubuntu-latest
+    environment: development
     steps:
     # Checkout the repository to the GitHub Actions runner
     - name: Checkout
