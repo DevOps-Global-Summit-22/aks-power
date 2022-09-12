@@ -2,10 +2,14 @@ name: Deploy Environment
 
 on:
   workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+        default: dev
 
 env:
   LOCATION: "westeurope"
-  environment: "dev"
 
 jobs:
   bicep-whatif:
@@ -38,7 +42,7 @@ jobs:
           az deployment sub validate \
             --name validate-${{ github.run_id }} \
             --template-file iac/deploy.bicep \
-            --parameters iac/parameters/parameters.${{ env.environment }}.json \
+            --parameters iac/parameters/parameters.${{ inputs.environment }}.json \
             --location $LOCATION     
     # Preview changes
     - name: "What-If"
@@ -48,7 +52,7 @@ jobs:
           az deployment sub what-if \
             --name whatif-${{ github.run_id }} \
             --template-file iac/deploy.bicep \
-            --parameters iac/parameters/parameters.${{ env.environment }}.json \
+            --parameters iac/parameters/parameters.${{ inputs.environment }}.json \
             --location $LOCATION > whatif
 
     # Create string output of Whatif
@@ -83,5 +87,5 @@ jobs:
           az deployment sub create \
             --name deploy-${{ github.run_id }} \
             --template-file iac/deploy.bicep \
-            --parameters iac/parameters/parameters.${{ env.environment }}.json \
+            --parameters iac/parameters/parameters.${{ inputs.environment }}.json \
             --location $LOCATION 
