@@ -31,3 +31,15 @@ module identity 'modules/identity/deploy.bicep' = {
     platform
   ]
 }
+
+module network 'modules/network/deploy.bicep' = {
+  name: 'network-deployment'
+  scope: resourceGroup(subscription().subscriptionId, resourceGroupName)
+  params: {
+    environment: environment
+    location: location
+  }
+  dependsOn: [
+    platform
+  ]
+}

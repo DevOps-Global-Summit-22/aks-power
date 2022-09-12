@@ -61,7 +61,7 @@ jobs:
       id: whatif-string
       run: |
         WHATIF=$(cat whatif)
-        echo "## Whatif Output ${{ inputs.environment }}" >> whatif.string
+        echo "## Whatif Output" >> whatif.string
         echo "<details><summary>Click to expand</summary>" >> whatif.string
         echo "" >> whatif.string
         echo '```' >> whatif.string
