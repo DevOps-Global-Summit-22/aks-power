@@ -8,9 +8,6 @@ param location string = resourceGroup().location
 ])
 param environment string
 
-@description('If we should deploy the AKS Application Gateway')
-param deployAgwAKS string = 'False'
-
 var aksKubernetesVersion = '1.23.5'
 
 //agw IP calculus
@@ -47,7 +44,7 @@ resource agw_pip 'Microsoft.Network/publicIPAddresses@2021-05-01' = {
   ]
 }
 
-resource agw 'Microsoft.Network/applicationGateways@2021-05-01' = if (deployAgwAKS == 'True') {
+resource agw 'Microsoft.Network/applicationGateways@2021-05-01' = {
   name: 'aks-power-${environment}-we-aks-agw'
   location: location
   properties: {
