@@ -15,6 +15,7 @@ jobs:
   bicep-whatif:
     name: 'Bicep Whatif'
     runs-on: ubuntu-latest
+    environment: development
     steps:
     # Checkout the repository to the GitHub Actions runner
     - name: Checkout
@@ -77,19 +78,32 @@ jobs:
       run: |
         cat whatif.string >> $GITHUB_STEP_SUMMARY
 
-    # If this is a PR post the changes
-    - name: Push Whatif Output to PR
-      if: github.ref != 'refs/heads/main'
-      uses: actions/github-script@v2
-      env:
-        SUMMARY: "${{ steps.whatif-string.outputs.summary }}"
-      with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const body = `${process.env.SUMMARY}`;
-            github.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: body
-            })
+bicep-deploy:
+  name: 'Bicep Deploy'
+  if: github.ref == 'refs/heads/main' 
+  runs-on: ubuntu-latest
+  environment: development-approval
+  needs: [bicep-whatif]
+
+  steps:
+  # Checkout the repository to the GitHub Actions runner
+  - name: Checkout
+    uses: actions/checkout@v2
+
+  # Authenticate to Az CLI using OIDC
+  - name: 'Az CLI login'
+    uses: azure/login@v1
+    with:
+      client-id: c45ab810-b8b0-4a2e-aabd-409af62461b7
+      tenant-id: 16b3c013-d300-468d-ac64-7eda0820b6d3
+      subscription-id: 4572a41c-c128-4e47-bbbc-19d1a188492d
+
+  # Deploy
+  - name: "Bicep Deployment"
+    uses: Azure/cli@v1
+    with:
+      inlineScript: |
+        az deployment sub create \
+          --name deploy-${{ github.run_id }} \
+          --template-file iac/deploy.bicep \
+          --location $LOCATION 
