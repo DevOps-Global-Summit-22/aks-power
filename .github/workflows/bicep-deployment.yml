@@ -8,8 +8,8 @@ env:
   environment: "dev"
 
 jobs:
-bicep-whatif:
-    name: 'Bicep Whatif'
+  bicep-whatif:
+    name: 'Bicep Whatif and Deployment'
     runs-on: ubuntu-latest
     steps:
     # Checkout the repository to the GitHub Actions runner
