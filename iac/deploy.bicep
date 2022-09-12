@@ -91,3 +91,16 @@ module peering 'modules/peering/deploy.bicep' = {
     jump
   ]
 }
+
+module spoke 'modules/spoke-mp/deploy.bicep' = {
+  name: 'infraSpoke-deployment'
+  scope: resourceGroup(subscription().subscriptionId, resourceGroupName)
+  params: {
+    environment: environment
+    location: location
+  }
+  dependsOn: [
+    platform
+    network
+  ]
+}
