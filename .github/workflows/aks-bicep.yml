@@ -8,6 +8,9 @@ permissions:
    id-token: write
    contents: read
 
+env:
+  LOCATION: "westeurope"
+
 jobs:
   bicep-whatif:
     name: 'Bicep Whatif'
