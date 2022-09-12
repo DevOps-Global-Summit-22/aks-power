@@ -4,10 +4,6 @@ on:
   workflow_call:
     inputs:
       environment:
-        required: true
-        type: string
-        default: dev
-      environment2:
         required: false
         type: string
         default: development
@@ -19,7 +15,7 @@ jobs:
   bicep-whatif-deployment:
     name: 'Bicep Deployment'
     runs-on: ubuntu-latest
-    environment: ${{ inputs.environment2 }}
+    environment: ${{ inputs.environment }}
     steps:
     # Checkout the repository to the GitHub Actions runner
     - name: Checkout

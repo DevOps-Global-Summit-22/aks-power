@@ -14,3 +14,7 @@ jobs:
     uses: ./.github/workflows/bicep-deployment.yml
     with:
       environment: development
+  PROD:
+    uses: ./.github/workflows/bicep-deployment.yml
+    with:
+      environment: production
