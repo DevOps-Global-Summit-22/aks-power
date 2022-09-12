@@ -8,20 +8,8 @@ param location string = resourceGroup().location
 ])
 param environment string
 
-@description('Name of the vnet of the spoke.')
-param spokeVnetName string
-
-@description('The AKS windows pool username.')
-param windowsProfileUsername string
-
-@description('The AKS windows pool password.')
-param windowsProfilePassword string
-
 @description('If we should deploy the AKS Application Gateway')
-param deployAgwAKS string
-
-@description('If we should deploy role assignemnts')
-param deployRoleAssignments string
+param deployAgwAKS string = 'False'
 
 var aksKubernetesVersion = '1.23.5'
 
@@ -32,7 +20,7 @@ var agwIpAddress = '${agwSubnetAddress[0]}.${agwSubnetAddress[1]}.${agwSubnetAdd
 
 //vnet
 resource spoke_vnet 'Microsoft.Network/virtualNetworks@2021-05-01' existing = {
-  name: spokeVnetName
+  name: 'aks-power-netw-${environment}-we-vnet'
 
   resource agw_subnet 'subnets@2021-05-01' existing = {
     name: 'aks-power-netw-${environment}-we-agw-aks-snet'
@@ -256,6 +244,7 @@ resource sqldb_encrypted_document 'Microsoft.DocumentDB/databaseAccounts/sqlData
   }
 }
 
+/*
 // Cosmos RBAC
 resource dbRoleDefinition 'Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions@2021-11-15-preview' = {
   name: '00000000-0000-0000-0000-000000000001'
@@ -302,6 +291,38 @@ resource dbRoleDefinition_2 'Microsoft.DocumentDB/databaseAccounts/sqlRoleDefini
   }
 }
 
+// Cosmos Private Endpoint
+resource pe_cosmos 'Microsoft.Network/privateEndpoints@2021-05-01' = {
+  name: 'aks-power-${environment}-we-cosmos-pe'
+  dependsOn: [
+    spoke_vnet
+  ]
+
+  location: location
+  properties: {
+    privateLinkServiceConnections: [
+      {
+        name: 'aks-power-${environment}-we-cosmos-pl_1'
+        properties: {
+          privateLinkServiceId: cosmos_account.id
+          groupIds: [
+            'Sql'
+          ]
+          privateLinkServiceConnectionState: {
+            status: 'Approved'
+            actionsRequired: 'None'
+          }
+        }
+      }
+    ]
+    manualPrivateLinkServiceConnections: []
+    subnet: {
+      id: '${spoke_vnet.id}/subnets/aks-power-netw-${environment}-we-cosmos-snet'
+    }
+  }
+}
+*/
+
 /* Azure KeyVault */
 
 resource kv 'Microsoft.KeyVault/vaults@2021-10-01' = {
@@ -328,6 +349,7 @@ resource kv 'Microsoft.KeyVault/vaults@2021-10-01' = {
   }
 }
 
+/*
 resource pe_kvt 'Microsoft.Network/privateEndpoints@2021-05-01' = {
   name: 'aks-power-${environment}-we-kv-pe'
   location: location
@@ -353,7 +375,7 @@ resource pe_kvt 'Microsoft.Network/privateEndpoints@2021-05-01' = {
     }
     customDnsConfigs: []
   }
-}
+}*/
 
 // container Registry
 resource containerRegistry 'Microsoft.ContainerRegistry/registries@2021-12-01-preview' = {
@@ -397,7 +419,8 @@ resource containerRegistry 'Microsoft.ContainerRegistry/registries@2021-12-01-pr
   }
 }
 
-resource containerreplication 'Microsoft.ContainerRegistry/registries/replications@2021-12-01-preview' = {
+/*
+resource container_replication 'Microsoft.ContainerRegistry/registries/replications@2021-12-01-preview' = {
   name: location
   location: location
   parent: containerRegistry
@@ -436,45 +459,15 @@ resource pe_cr 'Microsoft.Network/privateEndpoints@2021-05-01' = {
     }
     customDnsConfigs: []
   }
-}
-
-//Private Endpoint cosmos
-resource pe_cosmos 'Microsoft.Network/privateEndpoints@2021-05-01' = {
-  name: 'aks-power-${environment}-we-cosmos-pe'
-  dependsOn: [
-    spoke_vnet
-  ]
-
-  location: location
-  properties: {
-    privateLinkServiceConnections: [
-      {
-        name: 'aks-power-${environment}-we-cosmos-pl_1'
-        properties: {
-          privateLinkServiceId: cosmos_account.id
-          groupIds: [
-            'Sql'
-          ]
-          privateLinkServiceConnectionState: {
-            status: 'Approved'
-            actionsRequired: 'None'
-          }
-        }
-      }
-    ]
-    manualPrivateLinkServiceConnections: []
-    subnet: {
-      id: '${spoke_vnet.id}/subnets/aks-power-netw-${environment}-we-cosmos-snet'
-    }
-  }
-}
+}*/
 
 // AKS 
 
+/*
 resource pdns_aks 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: 'privatelink.westeurope.azmk8s.io'
 }
-
+*/
 resource aks_msi 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' existing = {
   name: 'aks-power-${environment}-we-aks-id'
 }
@@ -524,8 +517,8 @@ resource aks 'Microsoft.ContainerService/managedClusters@2022-01-02-preview' = {
       }
     ]
     windowsProfile: {
-      adminUsername: windowsProfileUsername
-      adminPassword: windowsProfilePassword
+      adminUsername: 'usernameakspower'
+      adminPassword: 'AKSPower2022'
       enableCSIProxy: true
     }
     servicePrincipalProfile: {
@@ -548,8 +541,8 @@ resource aks 'Microsoft.ContainerService/managedClusters@2022-01-02-preview' = {
     }
 
     apiServerAccessProfile: {
-      enablePrivateCluster: true
-      privateDNSZone: pdns_aks.id
+      enablePrivateCluster: false
+      //privateDNSZone: pdns_aks.id
       enablePrivateClusterPublicFQDN: false
     }
     addonProfiles: {
@@ -587,35 +580,6 @@ resource agentPoolWindows 'Microsoft.ContainerService/managedClusters/agentPools
   }
 }
 
-resource agentPoolWindowsBe 'Microsoft.ContainerService/managedClusters/agentPools@2021-08-01' = {
-  name: 'winbe'
-  parent: aks
-  properties: {
-    enableFIPS: false
-    orchestratorVersion: aksKubernetesVersion
-    kubeletDiskType: 'OS'
-    maxPods: 30
-    maxCount: 20
-    minCount: (environment == 'prod') ? 2 : 1
-    count: (environment == 'prod') ? 2 : 1
-    nodeLabels: {
-      usePPG: 'false'
-    }
-    enableAutoScaling: true
-    mode: 'User'
-    osType: 'Windows'
-    osDiskType: 'Managed'
-    type: 'VirtualMachineScaleSets'
-    vmSize: 'Standard_D8s_v5'
-    vnetSubnetID: '${spoke_vnet.id}/subnets/aks-power-netw-${environment}-we-aks-snet'
-    availabilityZones: [
-      '1'
-      '2'
-      '3'
-    ]
-  }
-}
-
 resource agentPoolLinux 'Microsoft.ContainerService/managedClusters/agentPools@2021-08-01' = {
   name: 'lin'
   parent: aks
@@ -646,6 +610,7 @@ resource agentPoolLinux 'Microsoft.ContainerService/managedClusters/agentPools@2
   }
 }
 
+/*
 resource keyvault_reader 'Microsoft.Authorization/roleDefinitions@2018-01-01-preview' existing = {
   scope: subscription()
   name: '21090545-7ca7-4776-b22c-e363652d74d2'
@@ -690,6 +655,7 @@ resource aks_cr_id_roleAssignment 'Microsoft.Authorization/roleAssignments@2020-
   }
   scope: containerRegistry
 }
+*/
 
 @description('AKS principal id.')
 output aksPrincipalId string = aks_msi.properties.principalId

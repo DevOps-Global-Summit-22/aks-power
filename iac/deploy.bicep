@@ -43,3 +43,16 @@ module network 'modules/network/deploy.bicep' = {
     platform
   ]
 }
+
+module spoke 'modules/spoke-mp/deploy.bicep' = {
+  name: 'infraSpoke-deployment'
+  scope: resourceGroup(subscription().subscriptionId, resourceGroupName)
+  params: {
+    environment: environment
+    location: location
+  }
+  dependsOn: [
+    platform
+    network
+  ]
+}
