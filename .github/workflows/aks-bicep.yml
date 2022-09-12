@@ -11,4 +11,4 @@ permissions:
 
 jobs:
   ReuseableMatrixJobForDeployment:
-    uses: DevOps-Global-Summit-22/aks-power/tree/main/.github/workflows/templates/bicep-deployment.yml@dev
+    uses: DevOps-Global-Summit-22/aks-power/tree/main/.github/workflows/bicep-deployment.yml@dev
