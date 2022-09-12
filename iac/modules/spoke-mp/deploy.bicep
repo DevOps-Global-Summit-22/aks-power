@@ -23,7 +23,7 @@ resource spoke_vnet 'Microsoft.Network/virtualNetworks@2021-05-01' existing = {
   name: 'aks-power-netw-${environment}-we-vnet'
 
   resource agw_subnet 'subnets@2021-05-01' existing = {
-    name: 'aks-power-netw-${environment}-we-agw-aks-snet'
+    name: 'aks-power-netw-${environment}-we-agw-snet'
   }
 }
 
