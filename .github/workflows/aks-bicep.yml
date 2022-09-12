@@ -15,6 +15,7 @@ jobs:
     with:
       environment: development
   PROD:
+    needs: [DEV]
     uses: ./.github/workflows/bicep-deployment.yml
     with:
       environment: production
