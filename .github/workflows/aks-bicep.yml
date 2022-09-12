@@ -1,1 +1,16 @@
-# 1st workflow, dummy line which will be removed shortly
+name: AKS Power Platform
+
+on:
+  push:
+    branches: [ dev ]
+
+permissions:
+   id-token: write
+   contents: read
+
+- name: 'Az CLI login'
+      uses: azure/login@v1
+      with:
+        client-id: c45ab810-b8b0-4a2e-aabd-409af62461b7
+        tenant-id: 16b3c013-d300-468d-ac64-7eda0820b6d3
+        subscription-id: 4572a41c-c128-4e47-bbbc-19d1a188492d
