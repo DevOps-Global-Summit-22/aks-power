@@ -515,7 +515,7 @@ resource aks 'Microsoft.ContainerService/managedClusters@2022-01-02-preview' = {
     ]
     windowsProfile: {
       adminUsername: 'usernameakspower'
-      adminPassword: 'AKSPower2022'
+      adminPassword: 'AKSPowerGlobalSummit2022'
       enableCSIProxy: true
     }
     servicePrincipalProfile: {
