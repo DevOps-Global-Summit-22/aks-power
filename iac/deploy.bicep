@@ -100,7 +100,6 @@ module spoke 'modules/spoke-mp/deploy.bicep' = {
     location: location
   }
   dependsOn: [
-    platform
     network
   ]
 }
