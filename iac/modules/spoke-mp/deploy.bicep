@@ -380,7 +380,7 @@ resource containerRegistry 'Microsoft.ContainerRegistry/registries@2021-12-01-pr
   location: location
 
   sku: {
-    name: 'Premium'
+    name: 'Basic'
   }
   properties: {
     adminUserEnabled: false
@@ -411,7 +411,7 @@ resource containerRegistry 'Microsoft.ContainerRegistry/registries@2021-12-01-pr
     dataEndpointEnabled: true
     publicNetworkAccess: 'Disabled'
     networkRuleBypassOptions: 'AzureServices'
-    zoneRedundancy: 'Enabled'
+    zoneRedundancy: 'Disabled'
     anonymousPullEnabled: false
   }
 }
