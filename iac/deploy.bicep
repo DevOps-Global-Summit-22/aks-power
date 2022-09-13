@@ -32,6 +32,15 @@ module identity 'modules/identity/deploy.bicep' = {
   ]
 }
 
+module roleAssignment 'modules/roleAssignments/deploy.bicep' = {
+  scope: resourceGroup(subscription().subscriptionId, resourceGroupName)
+  name: 'role-assignment-deployment'
+  params: {
+    principalId: identity.outputs.aksPrincipalId
+    roleDefinitionId: '8e3af657-a8ff-443c-a75c-2fe8c4bcb635' //Owner
+  }
+}
+
 module network 'modules/network/deploy.bicep' = {
   name: 'network-deployment'
   scope: resourceGroup(subscription().subscriptionId, resourceGroupName)
@@ -41,6 +50,7 @@ module network 'modules/network/deploy.bicep' = {
   }
   dependsOn: [
     platform
+    roleAssignment
   ]
 }
 
@@ -52,7 +62,6 @@ module spoke 'modules/spoke-mp/deploy.bicep' = {
     location: location
   }
   dependsOn: [
-    platform
     network
   ]
 }
