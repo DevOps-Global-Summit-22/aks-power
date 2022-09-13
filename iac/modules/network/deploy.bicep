@@ -9,19 +9,19 @@ param location string = resourceGroup().location
 param environment string
 
 @description('The address space for the subnet Cosmos.')
-param snetCosmosAddressSpace string = '10.0.0.0/29'
+param snetCosmosAddressSpace string = '192.178.0.0/29'
 
 @description('The address space for the subnet Key Vault.')
-param snetkvAddressSpace string = '11.0.0.8/29'
+param snetkvAddressSpace string = '192.178.0.8/29'
 
 @description('The address space for the subnet Container Registry.')
-param snetcrAddressSpace string = '11.0.0.16/29'
+param snetcrAddressSpace string = '192.178.0.16/29'
 
 @description('The address space for the subnet Aks.')
-param snetAksAddressSpace string = '11.0.1.0/24'
+param snetAksAddressSpace string = '192.178.1.0/24'
 
 @description('The address space for the subnet of the AKS ingress controller.')
-param snetaksagwAddressSpace string = '11.0.2.0/24'
+param snetaksagwAddressSpace string = '192.178.2.0/24'
 
 // Spoke mp virtual network vnet
 
