@@ -380,7 +380,7 @@ resource containerRegistry 'Microsoft.ContainerRegistry/registries@2021-12-01-pr
   location: location
 
   sku: {
-    name: 'Standard'
+    name: 'Premium'
   }
   properties: {
     adminUserEnabled: false
