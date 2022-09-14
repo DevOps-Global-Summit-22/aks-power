@@ -403,7 +403,6 @@ resource containerRegistry 'Microsoft.ContainerRegistry/registries@2021-12-01-pr
     encryption: {
       status: 'disabled'
     }
-    dataEndpointEnabled: true
     publicNetworkAccess: 'Disabled'
     networkRuleBypassOptions: 'AzureServices'
     zoneRedundancy: 'Disabled'
