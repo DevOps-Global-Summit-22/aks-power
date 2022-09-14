@@ -384,11 +384,6 @@ resource containerRegistry 'Microsoft.ContainerRegistry/registries@2021-12-01-pr
   }
   properties: {
     adminUserEnabled: false
-    networkRuleSet: {
-      defaultAction: 'Deny'
-      virtualNetworkRules: []
-      ipRules: []
-    }
     policies: {
       quarantinePolicy: {
         status: 'disabled'
