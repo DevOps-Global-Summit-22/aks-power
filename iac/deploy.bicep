@@ -103,3 +103,28 @@ module spoke 'modules/spoke-mp/deploy.bicep' = {
     network
   ]
 }
+
+module jump 'modules/jump/deploy.bicep' = {
+  name: 'jump-deployment'
+  scope: resourceGroup(subscription().subscriptionId, jumpResourceGroupName)
+  params: {
+    environment: environment
+    location: location
+    spokeResourceGroupName: spokeResourceGroupName
+  }
+  dependsOn: [
+    network
+  ]
+}
+
+module peering 'modules/peering/deploy.bicep' = {
+  name: 'jump-deployment'
+  scope: resourceGroup(subscription().subscriptionId, jumpResourceGroupName)
+  params: {
+    environment: environment
+    jumpResourceGroupName: jumpResourceGroupName
+  }
+  dependsOn: [
+    jump
+  ]
+}
