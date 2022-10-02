@@ -121,3 +121,87 @@ resource bastion 'Microsoft.Network/bastionHosts@2022-01-01' = {
     ]
   }
 }
+
+resource pip 'Microsoft.Network/publicIPAddresses@2021-02-01' = {
+  name: 'aks-power-${environment}-we-jump-vm-pip'
+  location: location
+  sku: {
+    name: 'Standard'
+    tier: 'Regional'
+  }
+  properties: {
+    publicIPAddressVersion: 'IPv4'
+    publicIPAllocationMethod: 'Static'
+    idleTimeoutInMinutes: 4
+  }
+  zones: [
+    '1'
+    '2'
+    '3'
+  ]
+}
+
+resource nic 'Microsoft.Network/networkInterfaces@2021-02-01' = {
+  name: 'aks-power-${environment}-we-jump-vm-nic'
+  location: location
+  properties: {
+    ipConfigurations: [
+      {
+        name: 'ipconfig1'
+        properties: {
+          privateIPAllocationMethod: 'Dynamic'
+          publicIPAddress: {
+            id: pip.id
+          }
+          subnet: {
+            id: vnet.properties.subnets[0].id
+          }
+        }
+      }
+    ]
+  }
+}
+
+resource vm 'Microsoft.Compute/virtualMachines@2021-03-01' = {
+  name: 'aks-power-${environment}-we-jump-vm'
+  location: location
+  properties: {
+    hardwareProfile: {
+      vmSize: 'Standard_DS1_v2'
+    }
+    osProfile: {
+      computerName: 'aks-power-${environment}-we-jump-vm'
+      adminUsername: 'githubuser'
+      adminPassword: 'GitHubuser$2022'
+    }
+    storageProfile: {
+      imageReference: {
+        publisher: 'MicrosoftWindowsDesktop'
+        offer: 'Windows-10'
+        sku: 'win10-21h2-pro-g2'
+        version: 'latest'
+      }
+      osDisk: {
+        createOption: 'FromImage'
+        managedDisk: {
+          storageAccountType: 'StandardSSD_LRS'
+        }
+      }
+      dataDisks: []
+    }
+    networkProfile: {
+      networkInterfaces: [
+        {
+          id: nic.id
+        }
+      ]
+    }
+    diagnosticsProfile: {
+      bootDiagnostics: {
+        enabled: true
+      }
+    }
+  }
+}
+
+output hostname string = pip.properties.dnsSettings.fqdn
