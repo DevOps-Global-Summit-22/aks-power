@@ -24,6 +24,9 @@ resource peering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2021-
   parent: spoke_vnet
   properties: {
     peeringState: 'Connected'
+    remoteVirtualNetwork: {
+      id: jump_vnet.id
+    }
     allowVirtualNetworkAccess: true
     allowForwardedTraffic: true
     allowGatewayTransit: false
