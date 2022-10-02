@@ -4,13 +4,25 @@ targetScope = 'subscription'
 param location string = deployment().location
 
 @description('Infra Resource Group Name')
-param resourceGroupName string
+param spokeResourceGroupName string
 
-resource rg 'Microsoft.Resources/resourceGroups@2019-05-01' = {
+@description('Jump Resource Group Name')
+param jumpResourceGroupName string
+
+resource spoke_rg 'Microsoft.Resources/resourceGroups@2019-05-01' = {
   location: location
-  name: resourceGroupName
+  name: spokeResourceGroupName
   properties: {}
 }
 
-@description('The name of the mp infra resource group')
-output resourceGroupName string = rg.name
+resource jump_rg 'Microsoft.Resources/resourceGroups@2019-05-01' = {
+  location: location
+  name: jumpResourceGroupName
+  properties: {}
+}
+
+@description('The name of the spoke resource group')
+output spokeResourceGroupName string = spoke_rg.name
+
+@description('The name of the jump resource group')
+output jumpResourceGroupName string = jump_rg.name

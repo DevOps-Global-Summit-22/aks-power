@@ -10,19 +10,20 @@ param location string = deployment().location
 ])
 param environment string
 
-var resourceGroupName = 'aks-power-${environment}-we-rg'
-
+var spokeResourceGroupName = 'aks-power-${environment}-we-rg'
+var jumpResourceGroupName = 'aks-power-jump-${environment}-we-rg'
 module platform 'modules/platform/deploy.bicep' = {
   name: 'platform-deployment'
   params: {
     location: location
-    resourceGroupName: resourceGroupName
+    spokeResourceGroupName: spokeResourceGroupName
+    jumpResourceGroupName: jumpResourceGroupName
   }
 }
 
 module identity 'modules/identity/deploy.bicep' = {
   name: 'identity-deployment'
-  scope: resourceGroup(subscription().subscriptionId, resourceGroupName)
+  scope: resourceGroup(subscription().subscriptionId, spokeResourceGroupName)
   params: {
     environment: environment
     location: location
@@ -33,7 +34,7 @@ module identity 'modules/identity/deploy.bicep' = {
 }
 
 module roleAssignment 'modules/roleAssignments/deploy.bicep' = {
-  scope: resourceGroup(subscription().subscriptionId, resourceGroupName)
+  scope: resourceGroup(subscription().subscriptionId, spokeResourceGroupName)
   name: 'role-assignment-deployment'
   params: {
     principalId: identity.outputs.aksPrincipalId
@@ -43,7 +44,7 @@ module roleAssignment 'modules/roleAssignments/deploy.bicep' = {
 
 module network 'modules/network/deploy.bicep' = {
   name: 'network-deployment'
-  scope: resourceGroup(subscription().subscriptionId, resourceGroupName)
+  scope: resourceGroup(subscription().subscriptionId, spokeResourceGroupName)
   params: {
     environment: environment
     location: location
@@ -56,12 +57,37 @@ module network 'modules/network/deploy.bicep' = {
 
 module spoke 'modules/spoke/deploy.bicep' = {
   name: 'infraSpoke-deployment'
-  scope: resourceGroup(subscription().subscriptionId, resourceGroupName)
+  scope: resourceGroup(subscription().subscriptionId, spokeResourceGroupName)
   params: {
     environment: environment
     location: location
   }
   dependsOn: [
     network
+  ]
+}
+
+module jump 'modules/jump/deploy.bicep' = {
+  name: 'jump-deployment'
+  scope: resourceGroup(subscription().subscriptionId, jumpResourceGroupName)
+  params: {
+    environment: environment
+    location: location
+    spokeResourceGroupName: spokeResourceGroupName
+  }
+  dependsOn: [
+    network
+  ]
+}
+
+module peering 'modules/peering/deploy.bicep' = {
+  name: 'jump-deployment'
+  scope: resourceGroup(subscription().subscriptionId, jumpResourceGroupName)
+  params: {
+    environment: environment
+    jumpResourceGroupName: jumpResourceGroupName
+  }
+  dependsOn: [
+    jump
   ]
 }
