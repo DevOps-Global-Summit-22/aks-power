@@ -10,12 +10,12 @@ param environment string
 
 var aksKubernetesVersion = '1.23.5'
 
-//agw IP calculus
+//IP Calculations
 var agwSubnetAddress = split(split(spoke_vnet::agw_subnet.properties.addressPrefix, '/')[0], '.')
 var agwfinalAddress = int(agwSubnetAddress[3]) + 4
 var agwIpAddress = '${agwSubnetAddress[0]}.${agwSubnetAddress[1]}.${agwSubnetAddress[2]}.${string(agwfinalAddress)}'
 
-//vnet
+//Virtual Network
 resource spoke_vnet 'Microsoft.Network/virtualNetworks@2021-05-01' existing = {
   name: 'aks-power-netw-${environment}-we-vnet'
 
@@ -24,7 +24,7 @@ resource spoke_vnet 'Microsoft.Network/virtualNetworks@2021-05-01' existing = {
   }
 }
 
-//applicationgateway
+//Application Gateway
 resource agw_pip 'Microsoft.Network/publicIPAddresses@2021-05-01' = {
   name: 'aks-power-${environment}-we-agw-aks-pip'
   location: location
@@ -241,53 +241,6 @@ resource sqldb_encrypted_document 'Microsoft.DocumentDB/databaseAccounts/sqlData
   }
 }
 
-/*
-// Cosmos RBAC
-resource dbRoleDefinition 'Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions@2021-11-15-preview' = {
-  name: '00000000-0000-0000-0000-000000000001'
-  parent: cosmos_account
-  properties: {
-    roleName: 'Cosmos DB Built-in Data Reader'
-    type: 'BuiltInRole'
-    assignableScopes: [
-      cosmos_account.id
-    ]
-    permissions: [
-      {
-        dataActions: [
-          'Microsoft.DocumentDB/databaseAccounts/readMetadata'
-          'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/executeQuery'
-          'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/readChangeFeed'
-          'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/items/read'
-        ]
-        notDataActions: []
-      }
-    ]
-  }
-}
-
-resource dbRoleDefinition_2 'Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions@2021-11-15-preview' = {
-  name: '00000000-0000-0000-0000-000000000002'
-  parent: cosmos_account
-  properties: {
-    roleName: 'Cosmos DB Built-in Data Contributor'
-    type: 'BuiltInRole'
-    assignableScopes: [
-      cosmos_account.id
-    ]
-    permissions: [
-      {
-        dataActions: [
-          'Microsoft.DocumentDB/databaseAccounts/readMetadata'
-          'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/*'
-          'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/items/*'
-        ]
-        notDataActions: []
-      }
-    ]
-  }
-}
-
 // Cosmos Private Endpoint
 resource pe_cosmos 'Microsoft.Network/privateEndpoints@2021-05-01' = {
   name: 'aks-power-${environment}-we-cosmos-pe'
@@ -318,9 +271,8 @@ resource pe_cosmos 'Microsoft.Network/privateEndpoints@2021-05-01' = {
     }
   }
 }
-*/
 
-/* Azure KeyVault */
+// Azure KeyVault
 
 resource kv 'Microsoft.KeyVault/vaults@2021-10-01' = {
   name: 'akspower${environment}wekv'
@@ -346,7 +298,7 @@ resource kv 'Microsoft.KeyVault/vaults@2021-10-01' = {
   }
 }
 
-/*
+
 resource pe_kvt 'Microsoft.Network/privateEndpoints@2021-05-01' = {
   name: 'aks-power-${environment}-we-kv-pe'
   location: location
@@ -372,9 +324,9 @@ resource pe_kvt 'Microsoft.Network/privateEndpoints@2021-05-01' = {
     }
     customDnsConfigs: []
   }
-}*/
+}
 
-// container Registry
+//Container Registry
 resource containerRegistry 'Microsoft.ContainerRegistry/registries@2021-12-01-preview' = {
   name: 'akspower${environment}wecr'
   location: location
@@ -410,18 +362,6 @@ resource containerRegistry 'Microsoft.ContainerRegistry/registries@2021-12-01-pr
   }
 }
 
-/*
-resource container_replication 'Microsoft.ContainerRegistry/registries/replications@2021-12-01-preview' = {
-  name: location
-  location: location
-  parent: containerRegistry
-
-  properties: {
-    regionEndpointEnabled: true
-    zoneRedundancy: 'Enabled'
-  }
-}
-
 resource pe_cr 'Microsoft.Network/privateEndpoints@2021-05-01' = {
   name: 'aks-power-${environment}-we-cr-pe'
   dependsOn: [
@@ -450,15 +390,10 @@ resource pe_cr 'Microsoft.Network/privateEndpoints@2021-05-01' = {
     }
     customDnsConfigs: []
   }
-}*/
+}
 
 // AKS 
 
-/*
-resource pdns_aks 'Microsoft.Network/privateDnsZones@2020-06-01' = {
-  name: 'privatelink.westeurope.azmk8s.io'
-}
-*/
 resource aks_msi 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' existing = {
   name: 'aks-power-${environment}-we-aks-id'
 }
@@ -547,7 +482,7 @@ resource aks 'Microsoft.ContainerService/managedClusters@2022-01-02-preview' = {
   }
 }
 
-resource agentPoolWindows 'Microsoft.ContainerService/managedClusters/agentPools@2021-08-01' = {
+resource agent_pool_windows 'Microsoft.ContainerService/managedClusters/agentPools@2021-08-01' = {
   name: 'winmf'
   parent: aks
   properties: {
@@ -571,7 +506,7 @@ resource agentPoolWindows 'Microsoft.ContainerService/managedClusters/agentPools
   }
 }
 
-resource agentPoolLinux 'Microsoft.ContainerService/managedClusters/agentPools@2021-08-01' = {
+resource agent_pool_linux 'Microsoft.ContainerService/managedClusters/agentPools@2021-08-01' = {
   name: 'lin'
   parent: aks
   properties: {
@@ -600,53 +535,6 @@ resource agentPoolLinux 'Microsoft.ContainerService/managedClusters/agentPools@2
     ]
   }
 }
-
-/*
-resource keyvault_reader 'Microsoft.Authorization/roleDefinitions@2018-01-01-preview' existing = {
-  scope: subscription()
-  name: '21090545-7ca7-4776-b22c-e363652d74d2'
-}
-
-resource aks_kv_id_reader_roleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = if (deployRoleAssignments == 'True') {
-  name: guid(kv.id, aks_msi.id, keyvault_reader.id)
-  properties: {
-    principalType: 'ServicePrincipal'
-    roleDefinitionId: keyvault_reader.id
-    principalId: aks_msi.properties.principalId
-  }
-  scope: kv
-}
-
-resource keyvault_secrets_reader 'Microsoft.Authorization/roleDefinitions@2018-01-01-preview' existing = {
-  scope: subscription()
-  name: '4633458b-17de-408a-b874-0445c86b69e6'
-}
-
-resource aks_kv_id_secrets_reader_roleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = if (deployRoleAssignments == 'True') {
-  name: guid(kv.id, aks_msi.id, keyvault_secrets_reader.id)
-  properties: {
-    principalType: 'ServicePrincipal'
-    roleDefinitionId: keyvault_secrets_reader.id
-    principalId: aks_msi.properties.principalId
-  }
-  scope: kv
-}
-
-resource cr_acrpull 'Microsoft.Authorization/roleDefinitions@2018-01-01-preview' existing = {
-  scope: subscription()
-  name: '7f951dda-4ed3-4680-a7ca-43fe172d538d'
-}
-
-resource aks_cr_id_roleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = if (deployRoleAssignments == 'True') {
-  name: guid(containerRegistry.id, aks_msi.id, cr_acrpull.id)
-  properties: {
-    principalType: 'ServicePrincipal'
-    roleDefinitionId: cr_acrpull.id
-    principalId: aks_msi.properties.principalId
-  }
-  scope: containerRegistry
-}
-*/
 
 @description('AKS principal id.')
 output aksPrincipalId string = aks_msi.properties.principalId

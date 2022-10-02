@@ -54,7 +54,7 @@ module network 'modules/network/deploy.bicep' = {
   ]
 }
 
-module spoke 'modules/spoke-mp/deploy.bicep' = {
+module spoke 'modules/spoke/deploy.bicep' = {
   name: 'infraSpoke-deployment'
   scope: resourceGroup(subscription().subscriptionId, resourceGroupName)
   params: {
