@@ -81,7 +81,7 @@ module jump 'modules/jump/deploy.bicep' = {
 }
 
 module peering 'modules/peering/deploy.bicep' = {
-  name: 'jump-deployment'
+  name: 'peering-deployment'
   scope: resourceGroup(subscription().subscriptionId, jumpResourceGroupName)
   params: {
     environment: environment
