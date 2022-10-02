@@ -163,14 +163,14 @@ resource nic 'Microsoft.Network/networkInterfaces@2021-02-01' = {
 }
 
 resource vm 'Microsoft.Compute/virtualMachines@2021-03-01' = {
-  name: 'akspower${environment}jumpvm'
+  name: 'akspower${environment}jump'
   location: location
   properties: {
     hardwareProfile: {
       vmSize: 'Standard_DS1_v2'
     }
     osProfile: {
-      computerName: 'akspower${environment}jumpvm'
+      computerName: 'akspower${environment}jump'
       adminUsername: 'githubuser'
       adminPassword: 'GitHubuser$2022'
     }
