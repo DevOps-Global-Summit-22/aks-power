@@ -1,1 +1,21 @@
-# 1st workflow, dummy line which will be removed shortly
+name: AKS Power Platform
+
+on:
+  push:
+    branches: [ dev ]
+
+permissions:
+   id-token: write
+   contents: read
+
+
+jobs:
+  DEV:
+    uses: ./.github/workflows/bicep-deployment.yml
+    with:
+      environment: development
+  PROD:
+    needs: [DEV]
+    uses: ./.github/workflows/bicep-deployment.yml
+    with:
+      environment: production
