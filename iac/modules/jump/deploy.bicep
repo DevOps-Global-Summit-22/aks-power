@@ -203,5 +203,3 @@ resource vm 'Microsoft.Compute/virtualMachines@2021-03-01' = {
     }
   }
 }
-
-output hostname string = pip.properties.dnsSettings.fqdn
