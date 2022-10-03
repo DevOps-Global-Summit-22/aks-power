@@ -298,7 +298,6 @@ resource kv 'Microsoft.KeyVault/vaults@2021-10-01' = {
   }
 }
 
-
 resource pe_kvt 'Microsoft.Network/privateEndpoints@2021-05-01' = {
   name: 'aks-power-${environment}-we-kv-pe'
   location: location
@@ -467,7 +466,7 @@ resource aks 'Microsoft.ContainerService/managedClusters@2022-01-02-preview' = {
     }
 
     apiServerAccessProfile: {
-      enablePrivateCluster: false
+      enablePrivateCluster: true
       //privateDNSZone: pdns_aks.id
       enablePrivateClusterPublicFQDN: false
     }
