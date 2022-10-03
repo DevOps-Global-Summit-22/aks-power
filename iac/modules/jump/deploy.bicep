@@ -145,6 +145,7 @@ resource nic 'Microsoft.Network/networkInterfaces@2021-02-01' = {
   name: 'aks-power-${environment}-we-jump-vm-nic'
   location: location
   properties: {
+    enableAcceleratedNetworking: true
     ipConfigurations: [
       {
         name: 'ipconfig1'
@@ -167,8 +168,9 @@ resource vm 'Microsoft.Compute/virtualMachines@2021-03-01' = {
   location: location
   properties: {
     hardwareProfile: {
-      vmSize: 'Standard_DS1_v2'
+      vmSize: 'Standard_D2s_v5'
     }
+
     osProfile: {
       computerName: 'akspower${environment}jump'
       adminUsername: 'githubuser'
@@ -177,8 +179,8 @@ resource vm 'Microsoft.Compute/virtualMachines@2021-03-01' = {
     storageProfile: {
       imageReference: {
         publisher: 'MicrosoftWindowsDesktop'
-        offer: 'Windows-10'
-        sku: 'win10-21h2-pro-g2'
+        offer: 'Windows-11'
+        sku: 'win11-22h2-pro-g2'
         version: 'latest'
       }
       osDisk: {
