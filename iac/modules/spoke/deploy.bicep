@@ -263,7 +263,7 @@ resource cosmos_account 'Microsoft.DocumentDB/databaseAccounts@2021-10-15-previe
       {
         locationName: location
         failoverPriority: 0
-        isZoneRedundant: true
+        isZoneRedundant: false
       }
     ]
     cors: []
@@ -280,6 +280,22 @@ resource cosmos_account 'Microsoft.DocumentDB/databaseAccounts@2021-10-15-previe
     networkAclBypassResourceIds: []
     diagnosticLogSettings: {
       enableFullTextQuery: 'None'
+    }
+  }
+}
+
+// Cosmos DB SQL DB 
+resource sqldb_encrypted_document 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2021-11-15-preview' = {
+  name: 'EncryptedDocumentsDatabase'
+  parent: cosmos_account
+  properties: {
+    resource: {
+      id: 'EncryptedDocumentsDatabase'
+    }
+    options: {
+      autoscaleSettings: {
+        maxThroughput: 4000
+      }
     }
   }
 }
