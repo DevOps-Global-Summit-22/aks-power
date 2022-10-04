@@ -11,12 +11,12 @@ permissions:
 
 jobs:
   DEV:
-    uses: ./.github/workflows/bicep-deployment.yml
+    uses: ./.github/workflows/bicep-istio-deployment.yml
     with:
       environment: development
 
   PROD:
     needs: [DEV]
-    uses: ./.github/workflows/bicep-deployment.yml
+    uses: ./.github/workflows/bicep-istio-deployment.yml
     with:
       environment: production
