@@ -14,106 +14,106 @@ env:
   HELM_VERSION: "3.10.0"
 
 jobs:
-  # Bicep deployment Job
-  bicep-whatif-deployment:
-    name: 'Bicep Deployment'
-    runs-on: ubuntu-latest
-    environment: ${{ inputs.environment }}
-    steps:
-    # Checkout the repository to the GitHub Actions runner
-    - name: Checkout
-      uses: actions/checkout@v3
+  # # Bicep deployment Job
+  # bicep-whatif-deployment:
+  #   name: 'Bicep Deployment'
+  #   runs-on: ubuntu-latest
+  #   environment: ${{ inputs.environment }}
+  #   steps:
+  #   # Checkout the repository to the GitHub Actions runner
+  #   - name: Checkout
+  #     uses: actions/checkout@v3
 
-    # Authenticate to Az CLI using OIDC
-    - name: 'Az CLI login'
-      uses: azure/login@v1
-      with:
-        client-id: c41691de-b101-48df-8e46-6c75df67c83b
-        tenant-id: b21d2602-445a-42f6-8657-9d684c04b21a
-        subscription-id: b459ab19-8de5-413f-a279-55bcc620591b
+  #   # Authenticate to Az CLI using OIDC
+  #   - name: 'Az CLI login'
+  #     uses: azure/login@v1
+  #     with:
+  #       client-id: c41691de-b101-48df-8e46-6c75df67c83b
+  #       tenant-id: b21d2602-445a-42f6-8657-9d684c04b21a
+  #       subscription-id: b459ab19-8de5-413f-a279-55bcc620591b
 
-    # Checks that all Bicep configuration files adhere to a canonical format
-    - name: Bicep Lint
-      uses: Azure/cli@v1
-      with:
-        inlineScript: az bicep build --file iac/deploy.bicep
+  #   # Checks that all Bicep configuration files adhere to a canonical format
+  #   - name: Bicep Lint
+  #     uses: Azure/cli@v1
+  #     with:
+  #       inlineScript: az bicep build --file iac/deploy.bicep
 
-    # Validate whether a template is valid at subscription scope
-    - name: Bicep Validate
-      uses: Azure/cli@v1
-      with:
-        inlineScript: |
-          az deployment sub validate \
-            --name validate-${{ github.run_id }} \
-            --template-file iac/deploy.bicep \
-            --parameters iac/parameters/parameters.${{ inputs.environment }}.json \
-            --location $LOCATION     
-    # Preview changes
-    - name: "What-If"
-      uses: Azure/cli@v1
-      with:
-        inlineScript: |
-          az deployment sub what-if \
-            --name whatif-${{ github.run_id }} \
-            --template-file iac/deploy.bicep \
-            --parameters iac/parameters/parameters.${{ inputs.environment }}.json \
-            --location $LOCATION > whatif
+  #   # Validate whether a template is valid at subscription scope
+  #   - name: Bicep Validate
+  #     uses: Azure/cli@v1
+  #     with:
+  #       inlineScript: |
+  #         az deployment sub validate \
+  #           --name validate-${{ github.run_id }} \
+  #           --template-file iac/deploy.bicep \
+  #           --parameters iac/parameters/parameters.${{ inputs.environment }}.json \
+  #           --location $LOCATION     
+  #   # Preview changes
+  #   - name: "What-If"
+  #     uses: Azure/cli@v1
+  #     with:
+  #       inlineScript: |
+  #         az deployment sub what-if \
+  #           --name whatif-${{ github.run_id }} \
+  #           --template-file iac/deploy.bicep \
+  #           --parameters iac/parameters/parameters.${{ inputs.environment }}.json \
+  #           --location $LOCATION > whatif
 
-    # Create string output of Whatif
-    - name: Create String Output
-      id: whatif-string
-      run: |
-        WHATIF=$(cat whatif)
-        echo "## Whatif Output" >> whatif.string
-        echo "<details><summary>Click to expand</summary>" >> whatif.string
-        echo "" >> whatif.string
-        echo '```' >> whatif.string
-        echo "$WHATIF" >> whatif.string
-        echo '```' >> whatif.string
-        echo "</details>" >> whatif.string
+  #   # Create string output of Whatif
+  #   - name: Create String Output
+  #     id: whatif-string
+  #     run: |
+  #       WHATIF=$(cat whatif)
+  #       echo "## Whatif Output" >> whatif.string
+  #       echo "<details><summary>Click to expand</summary>" >> whatif.string
+  #       echo "" >> whatif.string
+  #       echo '```' >> whatif.string
+  #       echo "$WHATIF" >> whatif.string
+  #       echo '```' >> whatif.string
+  #       echo "</details>" >> whatif.string
 
-        SUMMARY=$(cat whatif.string)
-        SUMMARY="${SUMMARY//'%'/'%25'}"
-        SUMMARY="${SUMMARY//$'\n'/'%0A'}"
-        SUMMARY="${SUMMARY//$'\r'/'%0D'}"
+  #       SUMMARY=$(cat whatif.string)
+  #       SUMMARY="${SUMMARY//'%'/'%25'}"
+  #       SUMMARY="${SUMMARY//$'\n'/'%0A'}"
+  #       SUMMARY="${SUMMARY//$'\r'/'%0D'}"
 
-        echo "::set-output name=summary::$SUMMARY"
-    # Publish What-If output as a task summary
-    - name: Publish Whatif to Task Summary
-      run: |
-        cat whatif.string >> $GITHUB_STEP_SUMMARY
+  #       echo "::set-output name=summary::$SUMMARY"
+  #   # Publish What-If output as a task summary
+  #   - name: Publish Whatif to Task Summary
+  #     run: |
+  #       cat whatif.string >> $GITHUB_STEP_SUMMARY
 
-    # Deploy
-    - name: "Bicep Deployment"
-      uses: Azure/cli@v1
-      id: bicep-deployment
-      with:
-        inlineScript: |
-          az deployment sub create \
-            --name deploy-${{ github.run_id }} \
-            --template-file iac/deploy.bicep \
-            --parameters iac/parameters/parameters.${{ inputs.environment }}.json \
-            --location $LOCATION
+  #   # Deploy
+  #   - name: "Bicep Deployment"
+  #     uses: Azure/cli@v1
+  #     id: bicep-deployment
+  #     with:
+  #       inlineScript: |
+  #         az deployment sub create \
+  #           --name deploy-${{ github.run_id }} \
+  #           --template-file iac/deploy.bicep \
+  #           --parameters iac/parameters/parameters.${{ inputs.environment }}.json \
+  #           --location $LOCATION
           
-          json=`az deployment sub show \
-            --name deploy-${{ github.run_id }} \
-            --query properties.outputs`
-          aks_name_value=`echo $json | jq -r '.aks_name.value'`
-          aks_resource_group_value=`echo $json | jq -r '.aks_resource_group.value'`
+  #         json=`az deployment sub show \
+  #           --name deploy-${{ github.run_id }} \
+  #           --query properties.outputs`
+  #         aks_name_value=`echo $json | jq -r '.aks_name.value'`
+  #         aks_resource_group_value=`echo $json | jq -r '.aks_resource_group.value'`
           
-          echo "::set-output name=aks_name::$aks_name_value"
-          echo "::set-output name=aks_resource_group::$aks_resource_group_value"
+  #         echo "::set-output name=aks_name::$aks_name_value"
+  #         echo "::set-output name=aks_resource_group::$aks_resource_group_value"
     
-    # Job outputs
-    outputs:
-     aks_name: ${{ steps.bicep-deployment.outputs.aks_name }}
-     aks_resource_group: ${{ steps.bicep-deployment.outputs.aks_resource_group }}
+  #   # Job outputs
+  #   outputs:
+  #    aks_name: ${{ steps.bicep-deployment.outputs.aks_name }}
+  #    aks_resource_group: ${{ steps.bicep-deployment.outputs.aks_resource_group }}
 
   # Istio deployment Job
   istio-deployment:
     name: 'Istio Deployment'
     runs-on: [self-hosted, Linux, X64]
-    needs: [bicep-whatif-deployment]
+    #needs: [bicep-whatif-deployment]
     environment: ${{ inputs.environment }}
     steps:
     # Workaround for https://github.com/actions/checkout/issues/211
@@ -139,9 +139,14 @@ jobs:
     - name: Getting AKS Credentials + Istio pre-check
       id: aks-creds-istio-precheck
       run: |
+        # az aks get-credentials \
+        #   --resource-group ${{ needs.bicep-whatif-deployment.outputs.aks_resource_group  }} \
+        #   --name ${{ needs.bicep-whatif-deployment.outputs.aks_name }} \
+        #   --overwrite-existing
+
         az aks get-credentials \
-          --resource-group ${{ needs.bicep-whatif-deployment.outputs.aks_resource_group  }} \
-          --name ${{ needs.bicep-whatif-deployment.outputs.aks_name }} \
+          --resource-group aks-power-dev-we-rg \
+          --name aks-power-dev-we-aks \
           --overwrite-existing
 
         defaultNsLabels=`kubectl get namespace default -o json | jq -r '.metadata.labels'`
@@ -153,13 +158,13 @@ jobs:
           echo "::set-output name=istioInstalled::false"
         fi
 
+        curl -LO https://github.com/istio/istio/releases/download/$ISTIO_VERSION/istio-$ISTIO_VERSION-linux-amd64.tar.gz
+        tar -zxvf istio-$ISTIO_VERSION-linux-amd64.tar.gz
+
     # Installing Istio
     - name: Installing Istio
       if: ${{ steps.aks-creds-istio-precheck.outputs.istioInstalled == 'false' }}
       run: |
-        curl -LO https://github.com/istio/istio/releases/download/$ISTIO_VERSION/istio-$ISTIO_VERSION-linux-amd64.tar.gz
-        tar -zxvf istio-$ISTIO_VERSION-linux-amd64.tar.gz
-
         helm repo add istio https://istio-release.storage.googleapis.com/charts
         helm repo update
 
