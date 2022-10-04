@@ -12,6 +12,7 @@ env:
   LOCATION: "westeurope"
 
 jobs:
+  # Bicep deployment Job
   bicep-whatif-deployment:
     name: 'Bicep Deployment'
     runs-on: ubuntu-latest
@@ -100,23 +101,36 @@ jobs:
           
           echo "::set-output name=aks_name::$aks_name_value"
           echo "::set-output name=aks_resource_group::$aks_resource_group_value"
-          if [ "${{ inputs.environment }}" == "production" ]; then
-            echo "::set-output name=branch::main"
-          else
-            echo "::set-output name=branch::dev"
-          fi
+    
+    # Job outputs
+    outputs:
+     aks_name: ${{ steps.bicep-deployment.outputs.aks_name }}
+     aks_resource_group: ${{ steps.bicep-deployment.outputs.aks_resource_group }}
 
-    - name: Trigger Workflow
-      uses: actions/github-script@v6
+  # Istio deployment Job
+  istio-deployment:
+    name: 'Istio Deployment'
+    runs-on: [self-hosted, Linux, X64]
+    needs: [bicep-whatif-deployment]
+    environment: ${{ inputs.environment }}
+    steps:
+    # Checkout the repository to the GitHub Actions runner
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    # Authenticate to Az CLI using OIDC
+    - name: 'Az CLI login'
+      uses: azure/login@v1
       with:
-        script: |
-          github.rest.actions.createWorkflowDispatch({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            workflow_id: 'istio-deployment.yml',
-            ref: '{{ steps.bicep-deployment.outputs.branch }}',
-            inputs: {
-              aks_name: ${{ steps.bicep-deployment.outputs.aks_name }}
-              aks_resource_group: ${{ steps.bicep-deployment.outputs.aks_resource_group }}
-            },
-          })
+        client-id: c41691de-b101-48df-8e46-6c75df67c83b
+        tenant-id: b21d2602-445a-42f6-8657-9d684c04b21a
+        subscription-id: b459ab19-8de5-413f-a279-55bcc620591b
+
+    # Get AKS Credentials
+    - name: Getting AKS Credentials
+      uses: Azure/cli@v1
+      with:
+        inlineScript: |
+          az aks get-credentials \
+            --resource-group ${{ needs.bicep-whatif-deployment.outputs.aks_resource_group  }}
+            --name ${{ needs.bicep-whatif-deployment.outputs.aks_name }}
