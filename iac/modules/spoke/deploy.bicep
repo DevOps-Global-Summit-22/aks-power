@@ -226,6 +226,95 @@ resource pe_kvt 'Microsoft.Network/privateEndpoints@2021-05-01' = {
   }
 }
 
+//Cosmos DB
+resource cosmos_account 'Microsoft.DocumentDB/databaseAccounts@2021-10-15-preview' = {
+  name: 'aks-power-${environment}-we-cosmosdb'
+  kind: 'GlobalDocumentDB'
+  location: location
+  tags: {
+    'defaultExperience': 'Core (SQL)'
+    'hidden-cosmos-mmspecial': ''
+  }
+  identity: {
+    type: 'SystemAssigned'
+  }
+  properties: {
+    publicNetworkAccess: 'Enabled'
+    enableAutomaticFailover: false
+    enableMultipleWriteLocations: false
+    isVirtualNetworkFilterEnabled: false
+    virtualNetworkRules: []
+    disableKeyBasedMetadataWriteAccess: false
+    enableFreeTier: false
+    enableAnalyticalStorage: false
+    analyticalStorageConfiguration: {
+      schemaType: 'WellDefined'
+    }
+    databaseAccountOfferType: 'Standard'
+    defaultIdentity: 'FirstPartyIdentity'
+    networkAclBypass: 'None'
+    disableLocalAuth: false
+    consistencyPolicy: {
+      defaultConsistencyLevel: 'Session'
+      maxIntervalInSeconds: 5
+      maxStalenessPrefix: 100
+    }
+    locations: [
+      {
+        locationName: location
+        failoverPriority: 0
+        isZoneRedundant: true
+      }
+    ]
+    cors: []
+    capabilities: []
+    ipRules: []
+    backupPolicy: {
+      type: 'Periodic'
+      periodicModeProperties: {
+        backupIntervalInMinutes: 240
+        backupRetentionIntervalInHours: 8
+        backupStorageRedundancy: 'Geo'
+      }
+    }
+    networkAclBypassResourceIds: []
+    diagnosticLogSettings: {
+      enableFullTextQuery: 'None'
+    }
+  }
+}
+
+// Cosmos Private Endpoint
+resource pe_cosmos 'Microsoft.Network/privateEndpoints@2021-05-01' = {
+  name: 'aks-power-${environment}-we-cosmos-pe'
+  dependsOn: [
+    spoke_vnet
+  ]
+
+  location: location
+  properties: {
+    privateLinkServiceConnections: [
+      {
+        name: 'aks-power-${environment}-we-cosmos-pl_1'
+        properties: {
+          privateLinkServiceId: cosmos_account.id
+          groupIds: [
+            'Sql'
+          ]
+          privateLinkServiceConnectionState: {
+            status: 'Approved'
+            actionsRequired: 'None'
+          }
+        }
+      }
+    ]
+    manualPrivateLinkServiceConnections: []
+    subnet: {
+      id: '${spoke_vnet.id}/subnets/aks-power-netw-${environment}-we-cosmos-snet'
+    }
+  }
+}
+
 //Container Registry
 resource containerRegistry 'Microsoft.ContainerRegistry/registries@2021-12-01-preview' = {
   name: 'akspower${environment}wacr'
