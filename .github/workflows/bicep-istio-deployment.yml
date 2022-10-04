@@ -141,11 +141,13 @@ jobs:
       run: |
         # az aks get-credentials \
         #   --resource-group ${{ needs.bicep-whatif-deployment.outputs.aks_resource_group  }} \
-        #   --name ${{ needs.bicep-whatif-deployment.outputs.aks_name }}
+        #   --name ${{ needs.bicep-whatif-deployment.outputs.aks_name }} \
+        #   --overwrite-existing
 
         az aks get-credentials \
           --resource-group aks-power-dev-we-rg \
-          --name aks-power-dev-we-aks
+          --name aks-power-dev-we-aks \
+          --overwrite-existing
 
         defaultNsLabels=`kubectl get namespace default -o json | jq -r '.metadata.labels'`
         if [[ $defaultNsLabels == *"istio-injection"* ]]; then
