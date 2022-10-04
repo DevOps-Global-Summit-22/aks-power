@@ -20,7 +20,7 @@ env:
 jobs:
   bicep-whatif-deployment:
     name: 'Bicep Deployment'
-    runs-on: [self-hosted, windows, x64]
+    runs-on: [self-hosted, Linux, X64]
     environment: ${{ inputs.environment }}
     steps:
     # Checkout the repository to the GitHub Actions runner
