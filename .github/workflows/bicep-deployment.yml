@@ -100,7 +100,23 @@ jobs:
           
           echo "::set-output name=aks_name::$aks_name_value"
           echo "::set-output name=aks_resource_group::$aks_resource_group_value"
+          if [ "${{ inputs.environment }}" == "production" ]; then
+            echo "::set-output name=branch::main"
+          else
+            echo "::set-output name=branch::dev"
+          fi
 
-    outputs:
-     aks_name: ${{ steps.bicep-deployment.outputs.aks_name }}
-     aks_resource_group: ${{ steps.bicep-deployment.outputs.aks_resource_group }}
+    - name: Trigger Workflow
+      uses: actions/github-script@v6
+      with:
+        script: |
+          github.rest.actions.createWorkflowDispatch({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            workflow_id: 'istio-deployment.yml',
+            ref: '{{ steps.bicep-deployment.outputs.branch }}',
+            inputs: {
+              aks_name: ${{ steps.bicep-deployment.outputs.aks_name }}
+              aks_resource_group: ${{ steps.bicep-deployment.outputs.aks_resource_group }}
+            },
+          })

@@ -10,27 +10,13 @@ permissions:
 
 
 jobs:
-  DEV_INFRA:
+  DEV:
     uses: ./.github/workflows/bicep-deployment.yml
     with:
       environment: development
-  DEV_SERVICE_MESH:
-    needs: [DEV_INFRA]
-    uses: ./.github/workflows/istio-deployment.yml
-    with:
-      environment: development
-      aks_name: ${{ needs.bicep-whatif-deployment.outputs.aks_name }}
-      aks_resource_group: ${{ needs.bicep-whatif-deployment.outputs.aks_resource_group }}
 
-  PROD_INFRA:
-    needs: [DEV_SERVICE_MESH]
+  PROD:
+    needs: [DEV]
     uses: ./.github/workflows/bicep-deployment.yml
     with:
       environment: production
-  PROD_SERVICE_MESH:
-    needs: [PROD_INFRA]
-    uses: ./.github/workflows/istio-deployment.yml
-    with:
-      environment: production
-      aks_name: ${{ needs.bicep-whatif-deployment.outputs.aks_name }}
-      aks_resource_group: ${{ needs.bicep-whatif-deployment.outputs.aks_resource_group }}

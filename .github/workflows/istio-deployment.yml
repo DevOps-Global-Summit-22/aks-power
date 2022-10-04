@@ -1,16 +1,19 @@
 name: Deploy Environment
 
 on:
-  workflow_call:
+  workflow_dispatch:
     inputs:
       environment:
+        description: 'GitHub environment'
         required: false
         type: string
         default: development
       aks_name:
+        description: 'AKS name'
         required: true
         type: string
       aks_resource_group:
+        description: 'AKS resource group'
         required: true
         type: string
 
