@@ -561,7 +561,7 @@ resource agent_pool_linux 'Microsoft.ContainerService/managedClusters/agentPools
   }
 }
 
-resource aks_diagnosticSettings 'Microsoft.Insights/diagnosticsettings@2021-05-01-preview' {
+resource aks_diagnosticSettings 'Microsoft.Insights/diagnosticsettings@2021-05-01-preview' = {
   name: 'aks-power-${environment}-we-diag'
   properties: {
     workspaceId: logAnalyticsWorkspace.id
