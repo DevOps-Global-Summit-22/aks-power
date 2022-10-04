@@ -19,8 +19,8 @@ jobs:
     uses: ./.github/workflows/istio-deployment.yml
     with:
       environment: development
-      aks_name: ${{ needs.DEV_INFRA.outputs.aks_name }}
-      aks_resource_group: ${{ needs.DEV_INFRA.outputs.aks_resource_group }}
+      aks_name: ${{ needs.bicep-whatif-deployment.outputs.aks_name }}
+      aks_resource_group: ${{ needs.bicep-whatif-deployment.outputs.aks_resource_group }}
 
   PROD_INFRA:
     needs: [DEV_SERVICE_MESH]
@@ -32,5 +32,5 @@ jobs:
     uses: ./.github/workflows/istio-deployment.yml
     with:
       environment: production
-      aks_name: ${{ needs.PROD_INFRA.outputs.aks_name }}
-      aks_resource_group: ${{ needs.PROD_INFRA.outputs.aks_resource_group }}
+      aks_name: ${{ needs.bicep-whatif-deployment.outputs.aks_name }}
+      aks_resource_group: ${{ needs.bicep-whatif-deployment.outputs.aks_resource_group }}
