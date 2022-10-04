@@ -11,6 +11,7 @@ on:
 env:
   LOCATION: "westeurope"
   ISTIO_VERSION: "1.15.1"
+  HELM_VERSION: "3.10.0"
 
 jobs:
   # # Bicep deployment Job
@@ -156,13 +157,9 @@ jobs:
       uses: Azure/cli@v1
       with:
         inlineScript: |
-          # az aks get-credentials \
-          #   --resource-group ${{ needs.bicep-whatif-deployment.outputs.aks_resource_group  }} \
-          #   --name ${{ needs.bicep-whatif-deployment.outputs.aks_name }}
-
-          az aks get-credentials \
-            --resource-group aks-power-dev-we-rg \
-            --name aks-power-dev-we-aks
+          curl -LO https://get.helm.sh/helm-v{{ env.HELM_VERSION }}-linux-amd64.tar.gz
+          tar -zxvf helm-v{{ env.HELM_VERSION }}-linux-amd64.tar.gz
+          mv linux-amd64/helm /usr/local/bin/helm
 
           helm repo add istio https://istio-release.storage.googleapis.com/charts
           helm repo update
@@ -178,14 +175,6 @@ jobs:
       uses: Azure/cli@v1
       with:
         inlineScript: |
-          # az aks get-credentials \
-          #   --resource-group ${{ needs.bicep-whatif-deployment.outputs.aks_resource_group  }} \
-          #   --name ${{ needs.bicep-whatif-deployment.outputs.aks_name }}
-
-          az aks get-credentials \
-            --resource-group aks-power-dev-we-rg \
-            --name aks-power-dev-we-aks
-
           curl -LO https://github.com/istio/istio/releases/download/{{ env.ISTIO_VERSION }}/istio-{{ env.ISTIO_VERSION }}-linux-amd64.tar.gz
           tar -zxvf istio-{{ env.ISTIO_VERSION }}-linux-amd64.tar.gz
           cd istio-{{ env.ISTIO_VERSION }}
@@ -197,13 +186,5 @@ jobs:
       uses: Azure/cli@v1
       with:
         inlineScript: |
-          # az aks get-credentials \
-          #   --resource-group ${{ needs.bicep-whatif-deployment.outputs.aks_resource_group  }} \
-          #   --name ${{ needs.bicep-whatif-deployment.outputs.aks_name }}
-
-          az aks get-credentials \
-            --resource-group aks-power-dev-we-rg \
-            --name aks-power-dev-we-aks
-            
           cd istio-{{ env.ISTIO_VERSION }}
           kubectl apply -f samples/addons
