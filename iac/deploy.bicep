@@ -42,6 +42,15 @@ module roleAssignment 'modules/roleAssignments/deploy.bicep' = {
   }
 }
 
+module roleAssignmentpdns 'modules/roleAssignments/deploy.bicep' = {
+  scope: resourceGroup(subscription().subscriptionId, spokeResourceGroupName)
+  name: 'pdns-role-assignment-deployment'
+  params: {
+    principalId: identity.outputs.aksPrincipalId
+    roleDefinitionId: 'b12aa53e-6015-4669-85d0-8515ebb3ae7f' //Private DNS Zone Contributor
+  }
+}
+
 module network 'modules/network/deploy.bicep' = {
   name: 'network-deployment'
   scope: resourceGroup(subscription().subscriptionId, spokeResourceGroupName)
