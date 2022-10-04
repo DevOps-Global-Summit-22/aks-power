@@ -132,5 +132,5 @@ jobs:
       with:
         inlineScript: |
           az aks get-credentials \
-            --resource-group ${{ needs.bicep-whatif-deployment.outputs.aks_resource_group  }}
+            --resource-group ${{ needs.bicep-whatif-deployment.outputs.aks_resource_group  }} \
             --name ${{ needs.bicep-whatif-deployment.outputs.aks_name }}
