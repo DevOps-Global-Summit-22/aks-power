@@ -169,7 +169,7 @@ resource agw 'Microsoft.Network/applicationGateways@2021-05-01' = {
 
 //Cosmos DB
 resource cosmos_account 'Microsoft.DocumentDB/databaseAccounts@2021-10-15-preview' = {
-  name: 'aks-power-${environment}-we-cosmos'
+  name: 'aks-power-${environment}-we-cosmosdb'
   kind: 'GlobalDocumentDB'
   location: location
   tags: {
@@ -275,7 +275,7 @@ resource pe_cosmos 'Microsoft.Network/privateEndpoints@2021-05-01' = {
 // Azure KeyVault
 
 resource kv 'Microsoft.KeyVault/vaults@2021-10-01' = {
-  name: 'akspower${environment}wekv'
+  name: 'akspower${environment}wakv'
   location: location
   properties: {
     sku: {
@@ -327,7 +327,7 @@ resource pe_kvt 'Microsoft.Network/privateEndpoints@2021-05-01' = {
 
 //Container Registry
 resource containerRegistry 'Microsoft.ContainerRegistry/registries@2021-12-01-preview' = {
-  name: 'akspower${environment}wecr'
+  name: 'akspower${environment}wacr'
   location: location
 
   sku: {
