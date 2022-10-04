@@ -432,6 +432,17 @@ resource pdns_aks_vnet_jumpbox_link 'Microsoft.Network/privateDnsZones/virtualNe
   }
 }
 
+resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2021-12-01-preview' = {
+  name: 'aks-power-${environment}-we-log'
+  location: location
+  properties: {
+    retentionInDays: 30
+    sku: {
+      name: 'PerGB2018'
+    }
+  }
+}
+
 resource aks 'Microsoft.ContainerService/managedClusters@2022-01-02-preview' = {
   dependsOn: [
     pdns_aks_vnet_cluster_link
@@ -548,6 +559,24 @@ resource agent_pool_linux 'Microsoft.ContainerService/managedClusters/agentPools
       '3'
     ]
   }
+}
+
+resource aks_diagnosticSettings 'Microsoft.Insights/diagnosticsettings@2021-05-01-preview' {
+  name: 'aks-power-${environment}-we-diag'
+  properties: {
+    workspaceId: logAnalyticsWorkspace.id
+    metrics: [
+      {
+        category: 'AllMetrics'
+        enabled: true
+        retentionPolicy: {
+          enabled: true
+          days: 7
+        }
+      }
+    ]
+  }
+  scope: aks
 }
 
 @description('AKS principal id.')

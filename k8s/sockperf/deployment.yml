@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webapp-network-tester
+  namespace: latencydemo
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: webapp-network-tester
+  template:
+    metadata:
+      labels:
+        app: webapp-network-tester
+    spec:
+      containers:
+      - image: jannemattila/webapp-network-tester:latest
+        imagePullPolicy: Always
+        name: webapp-network-tester
+        ports:
+        - containerPort: 80
+          name: http
+          protocol: TCP
+        - containerPort: 5201
+          name: iperf3tcp
+          protocol: TCP
+        - containerPort: 5202
+          name: iperf3udp
+          protocol: UDP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webapp-network-tester
+  namespace: latencydemoistio
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: webapp-network-tester
+  template:
+    metadata:
+      labels:
+        app: webapp-network-tester
+    spec:
+      containers:
+      - image: jannemattila/webapp-network-tester:latest
+        imagePullPolicy: Always
+        name: webapp-network-tester
+        ports:
+        - containerPort: 80
+          name: http
+          protocol: TCP
+        - containerPort: 5201
+          name: iperf3tcp
+          protocol: TCP
+        - containerPort: 5202
+          name: iperf3udp
+          protocol: UDP

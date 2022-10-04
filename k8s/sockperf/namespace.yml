@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: latencydemo
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+    name: latencydemoistio
+    labels:
+      istio-injection: enabled
