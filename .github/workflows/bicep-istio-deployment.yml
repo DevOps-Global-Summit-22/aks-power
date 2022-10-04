@@ -192,4 +192,4 @@ jobs:
         kubectl apply -f k8s/sockperf/service.yml
         kubectl apply -f k8s/sockperf/deployment.yml
 
-        kubectl apply -f k8s/log-analytics/configmap.yml
+        kubectl apply -f k8s/log-analytics/configmap.yaml
