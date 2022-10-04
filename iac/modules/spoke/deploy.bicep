@@ -402,6 +402,21 @@ resource pdns_aks 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   location: location
 }
 
+resource pdns_aks_vnet_link 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
+  dependsOn: [
+    spoke_vnet
+  ]
+  name: 'aks-pdns-${environment}-spoke-vnet-link'
+  location: location
+  parent: pdns_aks
+  properties: {
+    registrationEnabled: true
+    virtualNetwork: {
+      id: spoke_vnet.id
+    }
+  }
+}
+
 resource aks 'Microsoft.ContainerService/managedClusters@2022-01-02-preview' = {
   name: 'aks-power-${environment}-we-aks'
   location: location
