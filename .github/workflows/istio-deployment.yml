@@ -20,7 +20,7 @@ env:
 jobs:
   bicep-whatif-deployment:
     name: 'Bicep Deployment'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, windows, x64]
     environment: ${{ inputs.environment }}
     steps:
     # Checkout the repository to the GitHub Actions runner
@@ -41,5 +41,5 @@ jobs:
       with:
         inlineScript: |
           az aks get-credentials \
-            --resource-group aks-power-dev-we-rg
-            --name aks-power-dev-we-aks
+            --resource-group ${{ inputs.aks_resource_group }}
+            --name ${{ inputs.aks_name }}
