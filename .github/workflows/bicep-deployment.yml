@@ -91,6 +91,16 @@ jobs:
             --template-file iac/deploy.bicep \
             --parameters iac/parameters/parameters.${{ inputs.environment }}.json \
             --location $LOCATION
+          
+          json=`az deployment sub show \
+            --name deploy-${{ github.run_id }} \
+            --query properties.outputs`
+          aks_name_value=`echo $json | jq -r '.aks_name.value'`
+          aks_resource_group_value=`echo $json | jq -r '.aks_resource_group.value'`
+          
+          echo "::set-output name=aks_name::$aks_name_value"
+          echo "::set-output name=aks_resource_group::$aks_resource_group_value"
+
     outputs:
      aks_name: ${{ steps.bicep-deployment.outputs.aks_name }}
      aks_resource_group: ${{ steps.bicep-deployment.outputs.aks_resource_group }}
