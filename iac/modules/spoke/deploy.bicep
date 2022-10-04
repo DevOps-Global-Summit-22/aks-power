@@ -24,6 +24,10 @@ resource spoke_vnet 'Microsoft.Network/virtualNetworks@2021-05-01' existing = {
   }
 }
 
+resource jumpbox_vnet 'Microsoft.Network/virtualNetworks@2021-05-01' existing = {
+  name: 'aks-power-jump-netw-${environment}-we-vnet'
+}
+
 //Application Gateway
 resource agw_pip 'Microsoft.Network/publicIPAddresses@2021-05-01' = {
   name: 'aks-power-${environment}-we-agw-aks-pip'
@@ -297,10 +301,7 @@ resource pdns_aks 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   location: 'Global'
 }
 
-resource pdns_aks_vnet_link 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
-  dependsOn: [
-    spoke_vnet
-  ]
+resource pdns_aks_vnet_cluster_link 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
   name: 'aks-pdns-${environment}-spoke-vnet-link'
   location: 'Global'
   parent: pdns_aks
@@ -312,7 +313,23 @@ resource pdns_aks_vnet_link 'Microsoft.Network/privateDnsZones/virtualNetworkLin
   }
 }
 
+resource pdns_aks_vnet_jumpbox_link 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
+  name: 'aks-pdns-${environment}-spoke-vnet-link'
+  location: 'Global'
+  parent: pdns_aks
+  properties: {
+    registrationEnabled: true
+    virtualNetwork: {
+      id: jumpbox_vnet.id
+    }
+  }
+}
+
 resource aks 'Microsoft.ContainerService/managedClusters@2022-01-02-preview' = {
+  dependsOn: [
+    pdns_aks_vnet_cluster_link
+    pdns_aks_vnet_jumpbox_link
+  ]
   name: 'aks-power-${environment}-we-aks'
   location: location
   identity: {
