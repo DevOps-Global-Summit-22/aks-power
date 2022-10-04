@@ -130,61 +130,53 @@ jobs:
 
     # Get AKS Credentials and Istio pre-check
     - name: Getting AKS Credentials + Istio pre-check
-      uses: Azure/cli@v1
       id: aks-creds-istio-precheck
-      with:
-        inlineScript: |
-          # az aks get-credentials \
-          #   --resource-group ${{ needs.bicep-whatif-deployment.outputs.aks_resource_group  }} \
-          #   --name ${{ needs.bicep-whatif-deployment.outputs.aks_name }}
+      run: |
+        # az aks get-credentials \
+        #   --resource-group ${{ needs.bicep-whatif-deployment.outputs.aks_resource_group  }} \
+        #   --name ${{ needs.bicep-whatif-deployment.outputs.aks_name }}
 
-          az aks get-credentials \
-            --resource-group aks-power-dev-we-rg \
-            --name aks-power-dev-we-aks
+        az aks get-credentials \
+          --resource-group aks-power-dev-we-rg \
+          --name aks-power-dev-we-aks
 
-          defaultNsLabels=`kubectl get namespace default -o json | jq -r '.metadata.labels'`
-          if [[ $defaultNsLabels == *"istio-injection"* ]]; then
-            echo "Istio injection is already enabled on the default namespace"
-            echo "::set-output name=istioInstalled::true"
-          else
-            echo "Istio is not installed on the default namespace"
-            echo "::set-output name=istioInstalled::false"
-          fi
+        defaultNsLabels=`kubectl get namespace default -o json | jq -r '.metadata.labels'`
+        if [[ $defaultNsLabels == *"istio-injection"* ]]; then
+          echo "Istio injection is already enabled on the default namespace"
+          echo "::set-output name=istioInstalled::true"
+        else
+          echo "Istio is not installed on the default namespace"
+          echo "::set-output name=istioInstalled::false"
+        fi
 
     # Installing Istio
     - name: Installing Istio
       if: ${{ steps.aks-creds-istio-precheck.outputs.istioInstalled == 'false' }}
-      uses: Azure/cli@v1
-      with:
-        inlineScript: |
-          curl -LO https://get.helm.sh/helm-v$HELM_VERSION-linux-amd64.tar.gz
-          tar -zxvf helm-v$HELM_VERSION-linux-amd64.tar.gz
-          mv linux-amd64/helm /usr/local/bin/helm
+      run: |
+        # curl -LO https://get.helm.sh/helm-v$HELM_VERSION-linux-amd64.tar.gz
+        # tar -zxvf helm-v$HELM_VERSION-linux-amd64.tar.gz
+        # mv linux-amd64/helm /usr/local/bin/helm
 
-          helm repo add istio https://istio-release.storage.googleapis.com/charts
-          helm repo update
+        helm repo add istio https://istio-release.storage.googleapis.com/charts
+        helm repo update
 
-          kubectl create namespace istio-system
-          helm install istio-base istio/base -n istio-system
-          helm install istiod istio/istiod -n istio-system --wait
-          kubectl label namespace default istio-injection=enabled
+        kubectl create namespace istio-system
+        helm install istio-base istio/base -n istio-system
+        helm install istiod istio/istiod -n istio-system --wait
+        kubectl label namespace default istio-injection=enabled
 
     # Installing Istio demo app
     - name: Installing Istio demo app
       if: ${{ steps.aks-creds-istio-precheck.outputs.istioInstalled == 'false' }}
-      uses: Azure/cli@v1
-      with:
-        inlineScript: |
-          curl -LO https://github.com/istio/istio/releases/download/$ISTIO_VERSION/istio-$ISTIO_VERSION-linux-amd64.tar.gz
-          tar -zxvf istio-$ISTIO_VERSION-linux-amd64.tar.gz
-          cd istio-$ISTIO_VERSION
-          kubectl apply -f samples/bookinfo/platform/kube/bookinfo.yaml
+      run: |
+        curl -LO https://github.com/istio/istio/releases/download/$ISTIO_VERSION/istio-$ISTIO_VERSION-linux-amd64.tar.gz
+        tar -zxvf istio-$ISTIO_VERSION-linux-amd64.tar.gz
+        cd istio-$ISTIO_VERSION
+        kubectl apply -f samples/bookinfo/platform/kube/bookinfo.yaml
 
     # Installing Istio dependencies: Prometheus, Grafana and Kiali
     - name: Installing Istio dashboards
       if: ${{ steps.aks-creds-istio-precheck.outputs.istioInstalled == 'false' }}
-      uses: Azure/cli@v1
-      with:
-        inlineScript: |
-          cd istio-$ISTIO_VERSION
-          kubectl apply -f samples/addons
+      run: |
+        cd istio-$ISTIO_VERSION
+        kubectl apply -f samples/addons
