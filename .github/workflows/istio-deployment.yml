@@ -21,8 +21,8 @@ env:
   LOCATION: "westeurope"
 
 jobs:
-  bicep-whatif-deployment:
-    name: 'Bicep Deployment'
+  istio-deployment:
+    name: 'Istio Deployment'
     runs-on: [self-hosted, Linux, X64]
     environment: ${{ inputs.environment }}
     steps:

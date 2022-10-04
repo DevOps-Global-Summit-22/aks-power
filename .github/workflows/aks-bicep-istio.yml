@@ -16,7 +16,7 @@ jobs:
       environment: development
 
   PROD:
-    needs: [DEV]
+    needs: [istio-deployment]
     uses: ./.github/workflows/bicep-deployment.yml
     with:
       environment: production
