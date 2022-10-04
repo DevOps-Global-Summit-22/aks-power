@@ -116,6 +116,13 @@ jobs:
     #needs: [bicep-whatif-deployment]
     environment: ${{ inputs.environment }}
     steps:
+    # Workaround for https://github.com/actions/checkout/issues/211
+    - name: Applying the right permissions
+      run: |
+        ghOwnerRepo=${{ github.repository }}
+        repo=${ghOwnerRepo##*/}
+        sudo chown -R $USER:$USER /home/github/actions-runner/_work/$repo
+
     # Checkout the repository to the GitHub Actions runner
     - name: Checkout
       uses: actions/checkout@v3
