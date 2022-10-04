@@ -10,6 +10,7 @@ on:
 
 env:
   LOCATION: "westeurope"
+  ISTIO_VERSION: "1.15.1"
 
 jobs:
   # Bicep deployment Job
@@ -126,11 +127,55 @@ jobs:
         tenant-id: b21d2602-445a-42f6-8657-9d684c04b21a
         subscription-id: b459ab19-8de5-413f-a279-55bcc620591b
 
-    # Get AKS Credentials
-    - name: Getting AKS Credentials
+    # Get AKS Credentials and Istio pre-check
+    - name: Getting AKS Credentials + Istio pre-check
       uses: Azure/cli@v1
+      id: aks-creds-istio-precheck
       with:
         inlineScript: |
           az aks get-credentials \
             --resource-group ${{ needs.bicep-whatif-deployment.outputs.aks_resource_group  }} \
             --name ${{ needs.bicep-whatif-deployment.outputs.aks_name }}
+
+          defaultNsLabels=`kubectl get namespace default -o json | jq -r '.metadata.labels'`
+          if [[ $defaultNsLabels == *"istio-injection"* ]]; then
+            echo "Istio injection is already enabled on the default namespace"
+            echo "::set-output name=istioInstalled::true"
+          else
+            echo "Istio is not installed on the default namespace"
+            echo "::set-output name=istioInstalled::false"
+          fi
+
+    # Installing Istio
+    - name: Installing Istio
+      if: ${{ steps.aks-creds-istio-precheck.outputs.istioInstalled == 'false' }}
+      uses: Azure/cli@v1
+      with:
+        inlineScript: |
+          helm repo add istio https://istio-release.storage.googleapis.com/charts
+          helm repo update
+
+          kubectl create namespace istio-system
+          helm install istio-base istio/base -n istio-system
+          helm install istiod istio/istiod -n istio-system --wait
+          kubectl label namespace default istio-injection=enabled
+
+    # Installing Istio demo app
+    - name: Installing Istio demo app
+      if: ${{ steps.aks-creds-istio-precheck.outputs.istioInstalled == 'false' }}
+      uses: Azure/cli@v1
+      with:
+        inlineScript: |
+          curl -LO https://github.com/istio/istio/releases/download/{{ env.ISTIO_VERSION }}/istio-{{ env.ISTIO_VERSION }}-linux-amd64.tar.gz
+          tar -zxvf istio-{{ env.ISTIO_VERSION }}-linux-amd64.tar.gz
+          cd istio-{{ env.ISTIO_VERSION }}
+          kubectl apply -f samples/bookinfo/platform/kube/bookinfo.yaml
+
+    # Installing Istio dependencies: Prometheus, Grafana and Kiali
+    - name: Installing Istio dashboards
+      if: ${{ steps.aks-creds-istio-precheck.outputs.istioInstalled == 'false' }}
+      uses: Azure/cli@v1
+      with:
+        inlineScript: |
+          cd istio-{{ env.ISTIO_VERSION }}
+          kubectl apply -f samples/addons
