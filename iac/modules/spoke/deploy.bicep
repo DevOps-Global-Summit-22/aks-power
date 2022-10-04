@@ -552,3 +552,5 @@ resource agent_pool_linux 'Microsoft.ContainerService/managedClusters/agentPools
 
 @description('AKS principal id.')
 output aksPrincipalId string = aks_msi.properties.principalId
+@description('AKS Name')
+output aks_name string = aks.name

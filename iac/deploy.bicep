@@ -12,6 +12,7 @@ param environment string = 'dev'
 
 var spokeResourceGroupName = 'aks-power-${environment}-we-rg'
 var jumpResourceGroupName = 'aks-power-jump-${environment}-we-rg'
+
 module platform 'modules/platform/deploy.bicep' = {
   name: 'platform-deployment'
   params: {
