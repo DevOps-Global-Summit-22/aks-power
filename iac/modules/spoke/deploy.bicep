@@ -314,7 +314,7 @@ resource pdns_aks_vnet_cluster_link 'Microsoft.Network/privateDnsZones/virtualNe
 }
 
 resource pdns_aks_vnet_jumpbox_link 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
-  name: 'aks-pdns-${environment}-spoke-vnet-link'
+  name: 'aks-pdns-${environment}-jumpbox-vnet-link'
   location: 'Global'
   parent: pdns_aks
   properties: {
