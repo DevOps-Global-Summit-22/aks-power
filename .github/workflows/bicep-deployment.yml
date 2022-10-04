@@ -25,9 +25,9 @@ jobs:
     - name: 'Az CLI login'
       uses: azure/login@v1
       with:
-        client-id: c45ab810-b8b0-4a2e-aabd-409af62461b7
-        tenant-id: 16b3c013-d300-468d-ac64-7eda0820b6d3
-        subscription-id: 4572a41c-c128-4e47-bbbc-19d1a188492d
+        client-id: c41691de-b101-48df-8e46-6c75df67c83b #c45ab810-b8b0-4a2e-aabd-409af62461b7 (devops-global-summit-22)
+        tenant-id: b21d2602-445a-42f6-8657-9d684c04b21a #16b3c013-d300-468d-ac64-7eda0820b6d3 (devops-global-summit-22)
+        subscription-id: b459ab19-8de5-413f-a279-55bcc620591b #4572a41c-c128-4e47-bbbc-19d1a188492d (devops-global-summit-22)
 
     # Checks that all Bicep configuration files adhere to a canonical format
     - name: Bicep Lint
