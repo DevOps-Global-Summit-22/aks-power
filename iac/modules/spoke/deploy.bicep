@@ -294,7 +294,7 @@ resource aks_msi 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' e
 
 resource pdns_aks 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: 'aks-pdns-${environment}.privatelink.${location}.azmk8s.io'
-  location: location
+  location: 'Global'
 }
 
 resource pdns_aks_vnet_link 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
