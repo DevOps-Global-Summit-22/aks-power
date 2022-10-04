@@ -284,6 +284,22 @@ resource cosmos_account 'Microsoft.DocumentDB/databaseAccounts@2021-10-15-previe
   }
 }
 
+// Cosmos DB SQL DB 
+resource sqldb_encrypted_document 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2021-11-15-preview' = {
+  name: 'EncryptedDocumentsDatabase'
+  parent: cosmos_account
+  properties: {
+    resource: {
+      id: 'EncryptedDocumentsDatabase'
+    }
+    options: {
+      autoscaleSettings: {
+        maxThroughput: 4000
+      }
+    }
+  }
+}
+
 // Cosmos Private Endpoint
 resource pe_cosmos 'Microsoft.Network/privateEndpoints@2021-05-01' = {
   name: 'aks-power-${environment}-we-cosmos-pe'
