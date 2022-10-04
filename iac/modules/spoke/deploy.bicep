@@ -397,6 +397,11 @@ resource aks_msi 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' e
   name: 'aks-power-${environment}-we-aks-id'
 }
 
+resource pdns_aks 'Microsoft.Network/privateDnsZones@2020-06-01' = {
+  name: 'aks-pdns-${environment}.privatelink.${location}.azmk8s.io'
+  location: location
+}
+
 resource aks 'Microsoft.ContainerService/managedClusters@2022-01-02-preview' = {
   name: 'aks-power-${environment}-we-aks'
   location: location
@@ -467,7 +472,7 @@ resource aks 'Microsoft.ContainerService/managedClusters@2022-01-02-preview' = {
 
     apiServerAccessProfile: {
       enablePrivateCluster: true
-      //privateDNSZone: pdns_aks.id
+      privateDNSZone: pdns_aks.id
       enablePrivateClusterPublicFQDN: false
     }
     addonProfiles: {
