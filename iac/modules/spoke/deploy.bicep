@@ -9,6 +9,7 @@ param location string = resourceGroup().location
 param environment string
 
 var aksKubernetesVersion = '1.23.5'
+var jumpResourceGroupName = 'aks-power-jump-${environment}-we-rg'
 
 //IP Calculations
 var agwSubnetAddress = split(split(spoke_vnet::agw_subnet.properties.addressPrefix, '/')[0], '.')
@@ -26,6 +27,7 @@ resource spoke_vnet 'Microsoft.Network/virtualNetworks@2021-05-01' existing = {
 
 resource jumpbox_vnet 'Microsoft.Network/virtualNetworks@2021-05-01' existing = {
   name: 'aks-power-jump-netw-${environment}-we-vnet'
+  scope: resourceGroup(subscription().subscriptionId, jumpResourceGroupName)
 }
 
 //Application Gateway
