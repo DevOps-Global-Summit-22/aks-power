@@ -121,7 +121,6 @@ jobs:
   istio-deployment:
     name: 'Istio Deployment'
     runs-on: [self-hosted, Linux, X64, "${{ inputs.environment }}"]
-    if: ${{ inputs.environment == 'production' }}
     #needs: [bicep-whatif-deployment]
     environment: ${{ inputs.environment }}
     steps:
