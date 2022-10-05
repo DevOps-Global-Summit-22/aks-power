@@ -7,15 +7,13 @@ on:
         required: false
         type: string
         default: development
+    secrets:
       clientId:
-        required: false
-        type: string
+        required: true
       tenantId:
-        required: false
-        type: string
+        required: true
       subscriptionId:
-        required: false
-        type: string
+        required: true
 
 env:
   LOCATION: "westeurope"
