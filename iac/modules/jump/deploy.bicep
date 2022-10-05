@@ -150,7 +150,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2021-03-01' = {
     }
 
     osProfile: {
-      computerName: 'akspower${environment}jump'
+      computerName: environment == 'prod' ? 'akspowerprojump' : 'akspower${environment}jump'
       adminUsername: 'githubuser'
       adminPassword: 'GitHubuser$2022'
     }
