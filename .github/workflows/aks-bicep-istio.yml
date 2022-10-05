@@ -20,7 +20,7 @@ jobs:
   #     subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
   PROD:
-    needs: [DEV]
+    #needs: [DEV]
     uses: ./.github/workflows/bicep-istio-deployment.yml
     with:
       environment: production
