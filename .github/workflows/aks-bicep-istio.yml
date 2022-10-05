@@ -14,9 +14,15 @@ jobs:
     uses: ./.github/workflows/bicep-istio-deployment.yml
     with:
       environment: development
+      clientId: ${{ secrets.AZURE_CLIENT_ID  }}
+      tenantId: ${{ secrets.AZURE_TENANT_ID  }}
+      subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID  }}
 
   PROD:
     needs: [DEV]
     uses: ./.github/workflows/bicep-istio-deployment.yml
     with:
       environment: production
+      clientId: ${{ secrets.AZURE_CLIENT_ID  }}
+      tenantId: ${{ secrets.AZURE_TENANT_ID  }}
+      subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID  }}

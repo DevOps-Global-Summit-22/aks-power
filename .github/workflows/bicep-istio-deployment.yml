@@ -7,6 +7,15 @@ on:
         required: false
         type: string
         default: development
+      clientId:
+        required: false
+        type: string
+      tenantId:
+        required: false
+        type: string
+      subscriptionId:
+        required: false
+        type: string
 
 env:
   LOCATION: "westeurope"
@@ -29,9 +38,9 @@ jobs:
     - name: 'Az CLI login'
       uses: azure/login@v1
       with:
-        client-id: ${{ secrets.AZURE_CLIENT_ID  }}
-        tenant-id: ${{ secrets.AZURE_TENANT_ID  }}
-        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID  }}
+        client-id: ${{ inputs.clientId }}
+        tenant-id: ${{ inputs.tenantId }}
+        subscription-id: ${{ inputs.subscriptionId }}
 
     # Checks that all Bicep configuration files adhere to a canonical format
     - name: Bicep Lint
@@ -132,9 +141,9 @@ jobs:
     - name: 'Az CLI login'
       uses: azure/login@v1
       with:
-        client-id: ${{ secrets.AZURE_CLIENT_ID  }}
-        tenant-id: ${{ secrets.AZURE_TENANT_ID  }}
-        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID  }}
+        client-id: ${{ inputs.clientId }}
+        tenant-id: ${{ inputs.tenantId }}
+        subscription-id: ${{ inputs.subscriptionId }}
 
     # Get AKS Credentials and Istio pre-check
     - name: Getting AKS Credentials + Istio pre-check
