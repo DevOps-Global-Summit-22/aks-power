@@ -101,3 +101,11 @@ module peering 'modules/peering/deploy.bicep' = {
     jump
   ]
 }
+
+resource aks 'Microsoft.ContainerService/managedClusters@2022-01-02-preview' existing = {
+  name: 'aks-power-${environment}-we-aks'
+  scope: resourceGroup(spokeResourceGroupName)
+}
+
+output aks_name string = aks.name
+output aks_resource_group string = spokeResourceGroupName
