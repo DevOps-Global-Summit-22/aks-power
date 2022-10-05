@@ -36,9 +36,9 @@ jobs:
     - name: 'Az CLI login'
       uses: azure/login@v1
       with:
-        client-id: ${{ inputs.clientId }}
-        tenant-id: ${{ inputs.tenantId }}
-        subscription-id: ${{ inputs.subscriptionId }}
+        client-id: ${{ secrets.clientId }}
+        tenant-id: ${{ secrets.tenantId }}
+        subscription-id: ${{ secrets.subscriptionId }}
 
     # Checks that all Bicep configuration files adhere to a canonical format
     - name: Bicep Lint
@@ -139,9 +139,9 @@ jobs:
     - name: 'Az CLI login'
       uses: azure/login@v1
       with:
-        client-id: ${{ inputs.clientId }}
-        tenant-id: ${{ inputs.tenantId }}
-        subscription-id: ${{ inputs.subscriptionId }}
+        client-id: ${{ secrets.clientId }}
+        tenant-id: ${{ secrets.tenantId }}
+        subscription-id: ${{ secrets.subscriptionId }}
 
     # Get AKS Credentials and Istio pre-check
     - name: Getting AKS Credentials + Istio pre-check
