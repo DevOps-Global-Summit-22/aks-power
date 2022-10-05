@@ -102,10 +102,7 @@ module peering 'modules/peering/deploy.bicep' = {
   ]
 }
 
-resource aks 'Microsoft.ContainerService/managedClusters@2022-01-02-preview' existing = {
-  name: 'aks-power-${environment}-we-aks'
-  scope: resourceGroup(spokeResourceGroupName)
-}
-
-output aks_name string = aks.name
+@description('AKS Resource Group Name')
 output aks_resource_group string = spokeResourceGroupName
+@description('AKS Name')
+output aks_name string = spoke.outputs.aks_name
