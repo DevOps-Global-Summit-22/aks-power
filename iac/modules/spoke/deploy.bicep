@@ -527,6 +527,12 @@ resource aks 'Microsoft.ContainerService/managedClusters@2022-01-02-preview' = {
           applicationGatewayId: agw.id
         }
       }
+      omsagent: {
+        enabled: true
+        config: {
+          logAnalyticsWorkspaceResourceID: logAnalyticsWorkspace.id
+        }
+      }
     }
   }
 }
