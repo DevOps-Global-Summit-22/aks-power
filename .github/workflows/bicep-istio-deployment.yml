@@ -1,0 +1,203 @@
+name: Deploy Environment
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: false
+        type: string
+        default: development
+    secrets:
+      clientId:
+        required: true
+      tenantId:
+        required: true
+      subscriptionId:
+        required: true
+
+env:
+  LOCATION: "westeurope"
+  ISTIO_VERSION: "1.15.1"
+  HELM_VERSION: "3.10.0"
+  K8S_DASHBOARD_VERSION: "2.7.0"
+
+jobs:
+  # Bicep deployment Job
+  bicep-whatif-deployment:
+    name: 'Bicep Deployment'
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+    # Checkout the repository to the GitHub Actions runner
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    # Authenticate to Az CLI using OIDC
+    - name: 'Az CLI login'
+      uses: azure/login@v1
+      with:
+        client-id: ${{ secrets.clientId }}
+        tenant-id: ${{ secrets.tenantId }}
+        subscription-id: ${{ secrets.subscriptionId }}
+
+    # Checks that all Bicep configuration files adhere to a canonical format
+    - name: Bicep Lint
+      uses: Azure/cli@v1
+      with:
+        inlineScript: az bicep build --file iac/deploy.bicep
+
+    # Validate whether a template is valid at subscription scope
+    - name: Bicep Validate
+      uses: Azure/cli@v1
+      with:
+        inlineScript: |
+          az deployment sub validate \
+            --name validate-${{ github.run_id }} \
+            --template-file iac/deploy.bicep \
+            --parameters iac/parameters/parameters.${{ inputs.environment }}.json \
+            --location $LOCATION     
+    # Preview changes
+    - name: "What-If"
+      uses: Azure/cli@v1
+      with:
+        inlineScript: |
+          az deployment sub what-if \
+            --name whatif-${{ github.run_id }} \
+            --template-file iac/deploy.bicep \
+            --parameters iac/parameters/parameters.${{ inputs.environment }}.json \
+            --location $LOCATION > whatif
+
+    # Create string output of Whatif
+    - name: Create String Output
+      id: whatif-string
+      run: |
+        WHATIF=$(cat whatif)
+        echo "## Whatif Output" >> whatif.string
+        echo "<details><summary>Click to expand</summary>" >> whatif.string
+        echo "" >> whatif.string
+        echo '```' >> whatif.string
+        echo "$WHATIF" >> whatif.string
+        echo '```' >> whatif.string
+        echo "</details>" >> whatif.string
+
+        SUMMARY=$(cat whatif.string)
+        SUMMARY="${SUMMARY//'%'/'%25'}"
+        SUMMARY="${SUMMARY//$'\n'/'%0A'}"
+        SUMMARY="${SUMMARY//$'\r'/'%0D'}"
+
+        echo "::set-output name=summary::$SUMMARY"
+    # Publish What-If output as a task summary
+    - name: Publish Whatif to Task Summary
+      run: |
+        cat whatif.string >> $GITHUB_STEP_SUMMARY
+
+    # Deploy
+    - name: "Bicep Deployment"
+      uses: Azure/cli@v1
+      id: bicep-deployment
+      with:
+        inlineScript: |
+          az deployment sub create \
+            --name deploy-${{ github.run_id }} \
+            --template-file iac/deploy.bicep \
+            --parameters iac/parameters/parameters.${{ inputs.environment }}.json \
+            --location $LOCATION
+          
+          json=`az deployment sub show \
+            --name deploy-${{ github.run_id }} \
+            --query properties.outputs`
+          aks_name_value=`echo $json | jq -r '.aks_name.value'`
+          aks_resource_group_value=`echo $json | jq -r '.aks_resource_group.value'`
+          
+          echo "::set-output name=aks_name::$aks_name_value"
+          echo "::set-output name=aks_resource_group::$aks_resource_group_value"
+    
+    # Job outputs
+    outputs:
+     aks_name: ${{ steps.bicep-deployment.outputs.aks_name }}
+     aks_resource_group: ${{ steps.bicep-deployment.outputs.aks_resource_group }}
+
+  # Istio deployment Job
+  istio-deployment:
+    name: 'Istio Deployment'
+    runs-on: [self-hosted, Linux, X64, "${{ inputs.environment }}"]
+    needs: [bicep-whatif-deployment]
+    environment: ${{ inputs.environment }}
+    steps:
+    # Workaround for https://github.com/actions/checkout/issues/211
+    - name: Applying the right permissions
+      run: |
+        ghOwnerRepo=${{ github.repository }}
+        repo=${ghOwnerRepo##*/}
+        sudo chown -R $USER:$USER /home/githubuser/actions-runner/_work/$repo
+
+    # Checkout the repository to the GitHub Actions runner
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    # Authenticate to Az CLI using OIDC
+    - name: 'Az CLI login'
+      uses: azure/login@v1
+      with:
+        client-id: ${{ secrets.clientId }}
+        tenant-id: ${{ secrets.tenantId }}
+        subscription-id: ${{ secrets.subscriptionId }}
+
+    # Get AKS Credentials and Istio pre-check
+    - name: Getting AKS Credentials + Istio pre-check
+      id: aks-creds-istio-precheck
+      run: |
+        az aks get-credentials \
+          --resource-group ${{ needs.bicep-whatif-deployment.outputs.aks_resource_group  }} \
+          --name ${{ needs.bicep-whatif-deployment.outputs.aks_name }} \
+          --overwrite-existing
+
+        defaultNsLabels=`kubectl get namespace default -o json | jq -r '.metadata.labels'`
+        if [[ $defaultNsLabels == *"istio-injection"* ]]; then
+          echo "Istio injection is already enabled on the default namespace"
+          echo "::set-output name=istioInstalled::true"
+        else
+          echo "Istio is not installed on the default namespace"
+          echo "::set-output name=istioInstalled::false"
+        fi
+
+        curl -LO https://github.com/istio/istio/releases/download/$ISTIO_VERSION/istio-$ISTIO_VERSION-linux-amd64.tar.gz
+        tar -zxvf istio-$ISTIO_VERSION-linux-amd64.tar.gz
+
+    # Installing Istio
+    - name: Installing Istio
+      if: ${{ steps.aks-creds-istio-precheck.outputs.istioInstalled == 'false' }}
+      run: |
+        helm repo add istio https://istio-release.storage.googleapis.com/charts
+        helm repo update
+
+        kubectl create namespace istio-system
+        helm install istio-base istio/base -n istio-system
+        helm install istiod istio/istiod -n istio-system --wait
+        kubectl label namespace default istio-injection=enabled
+
+    # Deploying Istio demo app
+    - name: Deploying Istio demo app
+      run: |
+        cd istio-$ISTIO_VERSION
+        kubectl apply -f samples/bookinfo/platform/kube/bookinfo.yaml
+
+    # Deploying Istio dependencies: Prometheus, Grafana and Kiali
+    - name: Deploying Istio dashboards
+      run: |
+        cd istio-$ISTIO_VERSION
+        kubectl apply -f samples/addons
+
+    # Deploying Sockperf pods and Log Analytics configmap
+    - name: Deploying Sockperf and Log Analytics configmap
+      run: |
+        kubectl apply -f k8s/sockperf/namespace.yml
+        kubectl apply -f k8s/sockperf/service.yml
+        kubectl apply -f k8s/sockperf/deployment.yml
+
+        kubectl apply -f k8s/log-analytics/configmap.yaml
+
+    # Deploying Kubernetes dashboard
+    - name: Deploying Kubernetes dashboard
+      run: |
+        kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v$K8S_DASHBOARD_VERSION/aio/deploy/recommended.yaml

@@ -8,10 +8,11 @@ param location string = deployment().location
   'dev'
   'prod'
 ])
-param environment string
+param environment string = 'dev'
 
 var spokeResourceGroupName = 'aks-power-${environment}-we-rg'
 var jumpResourceGroupName = 'aks-power-jump-${environment}-we-rg'
+
 module platform 'modules/platform/deploy.bicep' = {
   name: 'platform-deployment'
   params: {
@@ -39,6 +40,15 @@ module roleAssignment 'modules/roleAssignments/deploy.bicep' = {
   params: {
     principalId: identity.outputs.aksPrincipalId
     roleDefinitionId: '8e3af657-a8ff-443c-a75c-2fe8c4bcb635' //Owner
+  }
+}
+
+module roleAssignmentpdns 'modules/roleAssignments/deploy.bicep' = {
+  scope: resourceGroup(subscription().subscriptionId, spokeResourceGroupName)
+  name: 'pdns-role-assignment-deployment'
+  params: {
+    principalId: identity.outputs.aksPrincipalId
+    roleDefinitionId: 'b12aa53e-6015-4669-85d0-8515ebb3ae7f' //Private DNS Zone Contributor
   }
 }
 
@@ -91,3 +101,8 @@ module peering 'modules/peering/deploy.bicep' = {
     jump
   ]
 }
+
+@description('AKS Resource Group Name')
+output aks_resource_group string = spokeResourceGroupName
+@description('AKS Name')
+output aks_name string = spoke.outputs.aks_name

@@ -122,8 +122,132 @@ resource bastion 'Microsoft.Network/bastionHosts@2022-01-01' = {
   }
 }
 
-resource pip 'Microsoft.Network/publicIPAddresses@2021-02-01' = {
-  name: 'aks-power-${environment}-we-jump-vm-pip'
+resource nic 'Microsoft.Network/networkInterfaces@2021-02-01' = {
+  name: 'aks-power-${environment}-we-jump-vm-nic'
+  location: location
+  properties: {
+    enableAcceleratedNetworking: true
+    ipConfigurations: [
+      {
+        name: 'ipconfig1'
+        properties: {
+          privateIPAllocationMethod: 'Dynamic'
+          subnet: {
+            id: vnet.properties.subnets[0].id
+          }
+        }
+      }
+    ]
+  }
+}
+
+resource vm 'Microsoft.Compute/virtualMachines@2021-03-01' = {
+  name: environment == 'prod' ? 'akspowerprojump' : 'akspower${environment}jump'
+  location: location
+  properties: {
+    hardwareProfile: {
+      vmSize: 'Standard_D2s_v5'
+    }
+
+    osProfile: {
+      computerName: environment == 'prod' ? 'akspowerprojump' : 'akspower${environment}jump'
+      adminUsername: 'githubuser'
+      adminPassword: 'GitHubuser$2022'
+    }
+    storageProfile: {
+      imageReference: {
+        publisher: 'MicrosoftWindowsDesktop'
+        offer: 'Windows-11'
+        sku: 'win11-22h2-pro'
+        version: 'latest'
+      }
+      osDisk: {
+        createOption: 'FromImage'
+        managedDisk: {
+          storageAccountType: 'StandardSSD_LRS'
+        }
+      }
+      dataDisks: []
+    }
+    networkProfile: {
+      networkInterfaces: [
+        {
+          id: nic.id
+        }
+      ]
+    }
+    diagnosticsProfile: {
+      bootDiagnostics: {
+        enabled: true
+      }
+    }
+  }
+}
+
+resource nic_ghrunner 'Microsoft.Network/networkInterfaces@2021-02-01' = {
+  name: 'aks-power-${environment}-we-run-vm-nic'
+  location: location
+  properties: {
+    enableAcceleratedNetworking: true
+    ipConfigurations: [
+      {
+        name: 'ipconfig1'
+        properties: {
+          privateIPAllocationMethod: 'Dynamic'
+          subnet: {
+            id: vnet.properties.subnets[0].id
+          }
+        }
+      }
+    ]
+  }
+}
+
+resource vm_ghrunner 'Microsoft.Compute/virtualMachines@2021-03-01' = {
+  name: environment == 'prod' ? 'akspowerprorun' : 'akspower${environment}run'
+  location: location
+  properties: {
+    hardwareProfile: {
+      vmSize: 'Standard_D2s_v5'
+    }
+
+    osProfile: {
+      computerName: 'akspower${environment}run'
+      adminUsername: 'githubuser'
+      adminPassword: 'GitHubuser$2022'
+    }
+    storageProfile: {
+      imageReference: {
+        publisher: 'Canonical'
+        offer: '0001-com-ubuntu-server-jammy'
+        sku: '22_04-lts-gen2'
+        version: 'latest'
+      }
+      osDisk: {
+        createOption: 'FromImage'
+        managedDisk: {
+          storageAccountType: 'StandardSSD_LRS'
+        }
+      }
+      dataDisks: []
+    }
+    networkProfile: {
+      networkInterfaces: [
+        {
+          id: nic_ghrunner.id
+        }
+      ]
+    }
+    diagnosticsProfile: {
+      bootDiagnostics: {
+        enabled: true
+      }
+    }
+  }
+}
+
+resource backup_pip 'Microsoft.Network/publicIPAddresses@2021-05-01' = {
+  name: 'aks-power-${environment}-we-backup-pip'
   location: location
   sku: {
     name: 'Standard'
@@ -141,18 +265,27 @@ resource pip 'Microsoft.Network/publicIPAddresses@2021-02-01' = {
   ]
 }
 
-resource nic 'Microsoft.Network/networkInterfaces@2021-02-01' = {
-  name: 'aks-power-${environment}-we-jump-vm-nic'
+resource backup_nsg 'Microsoft.Network/networkSecurityGroups@2022-01-01' = {
+  name: 'aks-power-${environment}-we-backup-vm-nsg'
+  location: location
+}
+
+resource backup_nic 'Microsoft.Network/networkInterfaces@2021-02-01' = {
+  name: 'aks-power-${environment}-we-backup-vm-nic'
   location: location
   properties: {
+    enableAcceleratedNetworking: true
+    networkSecurityGroup: {
+      id: backup_nsg.id
+    }
     ipConfigurations: [
       {
         name: 'ipconfig1'
         properties: {
-          privateIPAllocationMethod: 'Dynamic'
           publicIPAddress: {
-            id: pip.id
+            id: backup_pip.id
           }
+          privateIPAllocationMethod: 'Dynamic'
           subnet: {
             id: vnet.properties.subnets[0].id
           }
@@ -162,23 +295,24 @@ resource nic 'Microsoft.Network/networkInterfaces@2021-02-01' = {
   }
 }
 
-resource vm 'Microsoft.Compute/virtualMachines@2021-03-01' = {
-  name: 'akspower${environment}jump'
+resource backup_vm 'Microsoft.Compute/virtualMachines@2021-03-01' = {
+  name: environment == 'prod' ? 'akspowerprobak' : 'akspower${environment}bak'
   location: location
   properties: {
     hardwareProfile: {
-      vmSize: 'Standard_DS1_v2'
+      vmSize: 'Standard_D2s_v5'
     }
+
     osProfile: {
-      computerName: 'akspower${environment}jump'
+      computerName: 'akspower${environment}bak'
       adminUsername: 'githubuser'
       adminPassword: 'GitHubuser$2022'
     }
     storageProfile: {
       imageReference: {
         publisher: 'MicrosoftWindowsDesktop'
-        offer: 'Windows-10'
-        sku: 'win10-21h2-pro-g2'
+        offer: 'Windows-11'
+        sku: 'win11-22h2-pro'
         version: 'latest'
       }
       osDisk: {
@@ -192,7 +326,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2021-03-01' = {
     networkProfile: {
       networkInterfaces: [
         {
-          id: nic.id
+          id: backup_nic.id
         }
       ]
     }

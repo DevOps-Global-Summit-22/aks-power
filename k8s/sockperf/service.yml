@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: webapp-network-tester
+  namespace: latencydemo
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+  selector:
+    app: webapp-network-tester
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: webapp-network-tester
+  namespace: latencydemoistio
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+  selector:
+    app: webapp-network-tester

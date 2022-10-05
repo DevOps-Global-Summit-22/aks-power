@@ -9,6 +9,7 @@ param location string = resourceGroup().location
 param environment string
 
 var aksKubernetesVersion = '1.23.5'
+var jumpResourceGroupName = 'aks-power-jump-${environment}-we-rg'
 
 //IP Calculations
 var agwSubnetAddress = split(split(spoke_vnet::agw_subnet.properties.addressPrefix, '/')[0], '.')
@@ -22,6 +23,11 @@ resource spoke_vnet 'Microsoft.Network/virtualNetworks@2021-05-01' existing = {
   resource agw_subnet 'subnets@2021-05-01' existing = {
     name: 'aks-power-netw-${environment}-we-aks-agw-snet'
   }
+}
+
+resource jumpbox_vnet 'Microsoft.Network/virtualNetworks@2021-05-01' existing = {
+  name: 'aks-power-jump-netw-${environment}-we-vnet'
+  scope: resourceGroup(subscription().subscriptionId, jumpResourceGroupName)
 }
 
 //Application Gateway
@@ -167,9 +173,62 @@ resource agw 'Microsoft.Network/applicationGateways@2021-05-01' = {
   ]
 }
 
+// Azure KeyVault
+
+resource kv 'Microsoft.KeyVault/vaults@2021-10-01' = {
+  name: 'akspower${environment}wakv'
+  location: location
+  properties: {
+    sku: {
+      family: 'A'
+      name: 'standard'
+    }
+    tenantId: subscription().tenantId
+    accessPolicies: []
+    enableSoftDelete: true
+    softDeleteRetentionInDays: 7
+    enableRbacAuthorization: true
+    enablePurgeProtection: true
+    publicNetworkAccess: 'Disabled'
+    networkAcls: {
+      bypass: 'AzureServices'
+      defaultAction: 'Deny'
+      ipRules: []
+      virtualNetworkRules: []
+    }
+  }
+}
+
+resource pe_kvt 'Microsoft.Network/privateEndpoints@2021-05-01' = {
+  name: 'aks-power-${environment}-we-kv-pe'
+  location: location
+  properties: {
+    privateLinkServiceConnections: [
+      {
+        name: 'aks-power-${environment}-we-kv-pl'
+        properties: {
+          privateLinkServiceId: kv.id
+          groupIds: [
+            'vault'
+          ]
+          privateLinkServiceConnectionState: {
+            status: 'Approved'
+            actionsRequired: 'None'
+          }
+        }
+      }
+    ]
+    manualPrivateLinkServiceConnections: []
+    subnet: {
+      id: '${spoke_vnet.id}/subnets/aks-power-netw-${environment}-we-kv-snet'
+    }
+    customDnsConfigs: []
+  }
+}
+
 //Cosmos DB
 resource cosmos_account 'Microsoft.DocumentDB/databaseAccounts@2021-10-15-preview' = {
-  name: 'aks-power-${environment}-we-cosmos'
+  name: 'aks-power-${environment}-we-cosmosdb'
   kind: 'GlobalDocumentDB'
   location: location
   tags: {
@@ -204,7 +263,7 @@ resource cosmos_account 'Microsoft.DocumentDB/databaseAccounts@2021-10-15-previe
       {
         locationName: location
         failoverPriority: 0
-        isZoneRedundant: true
+        isZoneRedundant: false
       }
     ]
     cors: []
@@ -272,63 +331,9 @@ resource pe_cosmos 'Microsoft.Network/privateEndpoints@2021-05-01' = {
   }
 }
 
-// Azure KeyVault
-
-resource kv 'Microsoft.KeyVault/vaults@2021-10-01' = {
-  name: 'akspower${environment}wekv'
-  location: location
-  properties: {
-    sku: {
-      family: 'A'
-      name: 'standard'
-    }
-    tenantId: subscription().tenantId
-    accessPolicies: []
-    enableSoftDelete: true
-    softDeleteRetentionInDays: 7
-    enableRbacAuthorization: true
-    enablePurgeProtection: true
-    publicNetworkAccess: 'Disabled'
-    networkAcls: {
-      bypass: 'AzureServices'
-      defaultAction: 'Deny'
-      ipRules: []
-      virtualNetworkRules: []
-    }
-  }
-}
-
-
-resource pe_kvt 'Microsoft.Network/privateEndpoints@2021-05-01' = {
-  name: 'aks-power-${environment}-we-kv-pe'
-  location: location
-  properties: {
-    privateLinkServiceConnections: [
-      {
-        name: 'aks-power-${environment}-we-kv-pl'
-        properties: {
-          privateLinkServiceId: kv.id
-          groupIds: [
-            'vault'
-          ]
-          privateLinkServiceConnectionState: {
-            status: 'Approved'
-            actionsRequired: 'None'
-          }
-        }
-      }
-    ]
-    manualPrivateLinkServiceConnections: []
-    subnet: {
-      id: '${spoke_vnet.id}/subnets/aks-power-netw-${environment}-we-kv-snet'
-    }
-    customDnsConfigs: []
-  }
-}
-
 //Container Registry
 resource containerRegistry 'Microsoft.ContainerRegistry/registries@2021-12-01-preview' = {
-  name: 'akspower${environment}wecr'
+  name: 'akspower${environment}wacr'
   location: location
 
   sku: {
@@ -398,7 +403,51 @@ resource aks_msi 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' e
   name: 'aks-power-${environment}-we-aks-id'
 }
 
+resource pdns_aks 'Microsoft.Network/privateDnsZones@2020-06-01' = {
+  name: 'aks-pdns-${environment}.privatelink.${location}.azmk8s.io'
+  location: 'Global'
+}
+
+resource pdns_aks_vnet_cluster_link 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
+  name: 'aks-pdns-${environment}-spoke-vnet-link'
+  location: 'Global'
+  parent: pdns_aks
+  properties: {
+    registrationEnabled: true
+    virtualNetwork: {
+      id: spoke_vnet.id
+    }
+  }
+}
+
+resource pdns_aks_vnet_jumpbox_link 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
+  name: 'aks-pdns-${environment}-jumpbox-vnet-link'
+  location: 'Global'
+  parent: pdns_aks
+  properties: {
+    registrationEnabled: true
+    virtualNetwork: {
+      id: jumpbox_vnet.id
+    }
+  }
+}
+
+resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2021-12-01-preview' = {
+  name: 'aks-power-${environment}-we-log'
+  location: location
+  properties: {
+    retentionInDays: 30
+    sku: {
+      name: 'PerGB2018'
+    }
+  }
+}
+
 resource aks 'Microsoft.ContainerService/managedClusters@2022-01-02-preview' = {
+  dependsOn: [
+    pdns_aks_vnet_cluster_link
+    pdns_aks_vnet_jumpbox_link
+  ]
   name: 'aks-power-${environment}-we-aks'
   location: location
   identity: {
@@ -467,8 +516,8 @@ resource aks 'Microsoft.ContainerService/managedClusters@2022-01-02-preview' = {
     }
 
     apiServerAccessProfile: {
-      enablePrivateCluster: false
-      //privateDNSZone: pdns_aks.id
+      enablePrivateCluster: true
+      privateDNSZone: pdns_aks.id
       enablePrivateClusterPublicFQDN: false
     }
     addonProfiles: {
@@ -479,30 +528,6 @@ resource aks 'Microsoft.ContainerService/managedClusters@2022-01-02-preview' = {
         }
       }
     }
-  }
-}
-
-resource agent_pool_windows 'Microsoft.ContainerService/managedClusters/agentPools@2021-08-01' = {
-  name: 'winmf'
-  parent: aks
-  properties: {
-    count: 1
-    enableFIPS: false
-    orchestratorVersion: aksKubernetesVersion
-    kubeletDiskType: 'OS'
-    maxPods: 30
-    maxCount: 20
-    minCount: 1
-    nodeLabels: {
-      usePPG: 'true'
-    }
-    enableAutoScaling: true
-    mode: 'User'
-    osType: 'Windows'
-    osDiskType: 'Managed'
-    type: 'VirtualMachineScaleSets'
-    vmSize: 'Standard_D4s_v5'
-    vnetSubnetID: '${spoke_vnet.id}/subnets/aks-power-netw-${environment}-we-aks-snet'
   }
 }
 
@@ -536,5 +561,25 @@ resource agent_pool_linux 'Microsoft.ContainerService/managedClusters/agentPools
   }
 }
 
+resource aks_diagnosticSettings 'Microsoft.Insights/diagnosticsettings@2021-05-01-preview' = {
+  name: 'aks-power-${environment}-we-diag'
+  properties: {
+    workspaceId: logAnalyticsWorkspace.id
+    metrics: [
+      {
+        category: 'AllMetrics'
+        enabled: true
+        retentionPolicy: {
+          enabled: true
+          days: 7
+        }
+      }
+    ]
+  }
+  scope: aks
+}
+
 @description('AKS principal id.')
 output aksPrincipalId string = aks_msi.properties.principalId
+@description('AKS Name')
+output aks_name string = aks.name
